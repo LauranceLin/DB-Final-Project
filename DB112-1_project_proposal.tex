@@ -1,0 +1,216 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{fullpage}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{url}
+\usepackage{multirow}
+% 為了讓表格緊密
+\usepackage{float}
+% 為了首行空格
+%\usepackage{indentfirst}
+% % 為表格添加 footnote
+% \usepackage{tablefootnote}
+
+% for Chinese
+% [Laurance] 因為 Overleaf 沒有新細明體，所以我改成 cwTeXMing
+\usepackage{fontspec} % 加這個就可以設定字體
+\usepackage[BoldFont, SlantFont]{xeCJK} % 讓中英文字體分開設置
+\setCJKmainfont{cwTeXMing} % 設定中文為系統上的字型，而英文不去更動，使用原TeX\字型
+\renewcommand{\baselinestretch}{1.3}
+
+\parskip=5pt
+\parindent=24pt
+\newtheorem{lemma}{Lemma}
+\newtheorem{ques}{Question}
+\newtheorem{prop}{Proposition}
+\newtheorem{defn}{Definition}
+\newtheorem{rmk}{Remark}
+\newtheorem{note}{Note}
+\newtheorem{eg}{Example}
+\newtheorem{aspt}{Assumption}
+
+\definecolor{emphOrange}{RGB}{247, 80, 0}
+\definecolor{stringGray}{RGB}{109, 109, 109}
+\definecolor{commentGreen}{RGB}{0, 96, 0}
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+
+\lstset{
+  belowcaptionskip=1\baselineskip,
+  breaklines=true,
+  frame=L,
+%  xleftmargin=\parindent,
+  language = SQL,
+  showstringspaces=false,
+  basicstyle = \ttfamily, 
+  keywordstyle = \bfseries\color{blue}, 
+  emph = {symbol1, symbol2},
+  emphstyle = \color{red},
+  emph = {[2]symbol3, symbol4},
+  emphstyle = {[2]\color{emphOrange}},
+  commentstyle = \color{commentGreen}, 
+  stringstyle = \color{stringGray}, 
+%  backgroundcolor = \color{white}, 
+%  numbers = left, % 沒有行號，複製貼上測試程式會比較方便
+%  numberstyle = \normalsize, 
+%	stepnumber = 1, 
+%  numbersep = 10pt, 
+%  title = ,
+}
+
+% "摘要", "表", "圖", "參考文獻"
+\renewcommand{\abstractname}{\bf 摘要}
+\renewcommand{\tablename}{表}
+\renewcommand{\figurename}{圖}
+\renewcommand{\refname}{\bf 參考文獻}
+
+
+
+
+
+\begin{document}
+
+\title{}
+\author{}
+\date{}
+%\maketitle
+%\fontsize{20}{20pt}\selectfonb08901164@ntu.edu.twt
+
+% [Laurance] 請大家打上自己的名字！日期之後也可以再修改
+\begin{center}
+\textbf{\Large 資料庫管理（112-1） \\[5pt]
+期末專案計劃書} \\[10pt]
+B11705050 林稚翔 \\
+2023 年 10 月 23 日
+\end{center}
+
+
+
+
+
+\section{系統分析}
+
+% 功能概述
+
+\subsection{系統功能}    
+
+\subsubsection{交易流程相關設定}
+
+在買方和賣方成功媒合後，將先由買方向平台線上支付一筆金額，包含該筆交易的價格、由賣方寄送至買方將支出的運費以及在平台交易的手續費。
+在交易達成後，賣方要將票券寄出，並向平台回報物流編號，由平台向物流公司追蹤並顯示物流寄送狀態。
+待買方完成取貨且確認票券品項、狀態等皆無誤後，將向平台回報交易完成，此時平台再將該筆交易金額及運費轉至賣方。
+
+交易也可能會失敗。如果賣方在7天內沒有出貨，或是買方在票券已送達的7天內未取貨，平台會把買方預付的款項退回，並停止賣方或買方的使用權限3個月。
+而單一帳號被停權3次以上，帳號會被平台管理方刪除，如果發布的交易貼文被平台管理方視為詐騙，也將被永久停權。
+
+
+
+
+
+\subsubsection{給 User 的功能}
+
+在本系統中，User 可以執行以下功能：
+\begin{enumerate}
+\item 
+
+註冊帳號：使用者可以提供自己的姓名、電子信箱等相關資訊註冊平台帳號，必須登入帳號後才可以在平台上進行互動。
+
+\item 
+
+新增交易貼文：使用者可以選擇要購買或出售票券，並填寫票券相關資訊，包含活動類型、活動名稱、活動時間、票券數量、出售價格（購買票券者毋須填寫）以及這筆交易達成的期限，當貼文發佈後，系統會給訂一個屬於該貼文的編號。
+
+\item 
+
+修改交易貼文：使用者可以修改票券數量、出售數量及這筆交易達成的期限，但活動類型、活動名稱與活動時間無法更動。
+
+\item 
+
+刪除交易貼文：使用者如果臨時不想交易票券，可以刪除由自己發出的交易貼文。
+
+\item 
+
+新增交易：使用者如果看到符合自己需求的交易文章，可以選擇與其交易，如果是購買票券者，需填寫收貨方式，而如果是出售票券者，需填寫出售價格。待填寫完成後，系統會給訂一個屬於該交易的編號，並更新相關貼文的票券數量，如果票券數量歸零，將不再顯示該貼文。
+
+\item 
+
+向平台付款：購買票券者要向平台支付一筆包含交易金額、物流費及手續費的款項。
+
+\item 
+
+新增物流編號：出售票券者將票券寄出後，要向平台回報其物流編號。
+
+\item 
+
+修改物流編號：出售票券者如果填錯物流編號，可以進行修改。
+
+\item 
+
+新增交易完成：出售票券者收到並確認過票券後，向平台回報交易完成。
+
+\item 
+
+查詢交易貼文：使用者可以查詢目前仍有票券要交易的貼文。
+
+\item 
+
+查詢使用者過去的交易：使用者可以查詢自己過去進行的交易。
+        
+\end{enumerate}
+   
+   
+
+   
+   
+\subsubsection{給 Admin 的功能}
+
+在本系統中，Admin 可以執行以下功能：
+\begin{enumerate}
+\item 
+
+管理交易貼文：管理員可以對交易貼文進行查詢、刪除、修改的操作。
+
+\item 
+
+管理使用者帳號：管理員可以對使用者帳號進行查詢、刪除、修改的操作。
+
+\item 
+
+新增使用者帳號停權：管理員可以將使用者帳號停權。
+
+\end{enumerate}
+
+
+
+
+
+\subsubsection{給 Analyst 的功能}
+
+在本系統中，Analyst 可以執行以下功能：
+\begin{enumerate}
+\item 
+
+查詢使用者資訊：資料分析師可查詢所有使用者的活動紀錄，包括該使用者曾經發出的貼文、參與的交易有哪些及停權狀態。
+
+\item 
+
+查詢交易貼文資訊：資料分析師可查詢每一則交易貼文的詳細資訊。
+
+\item 
+
+查詢交易資訊：資料分析師可查詢所有交易的詳細資訊，包含付款狀態、物流狀態及交易是否完成。
+
+\end{enumerate}
+
+
+
+
+
+\end{document}
