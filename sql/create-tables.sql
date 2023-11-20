@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS Placement(
 );
 
 CREATE TABLE IF NOT EXISTS Animal(
-    AnimalId INT NOT NULL,
+    AnimalId SERIAL NOT NULL,
     EventId INT NOT NULL,
     Type VARCHAR(6) NOT NULL,
     Description VARCHAR(150),

@@ -20,6 +20,7 @@ FIRE_AGENCY_DICTIONARY = './csv/fireagency_names.csv'
 POLICE_STATION_DICTIONARY = './csv/policeagency_names.csv'
 SHORT_ADDRESS_DICTIONARY = './csv/short_address.csv'
 RESPONDER_ADDRESS_DICTIONARY = './csv/responder_address.csv'
+PLACEMENT_NAME_DICTIONARY = './csv/placement_names.csv'
 
 CITY = ['Taipei', 'New Taipei']
 DISTRICTS = [
@@ -60,6 +61,8 @@ USER_ID_ARRAY = []
 RESPONDER_ID_ARRAY = []
 NUM_OF_CHANNELS = -1
 EVENT_ID_ARRAY = []
+PLACEMENT_ID_ARRAY = []
+MAX_NUM_ANIMALS_PER_EVENT = 4
 
 # user names
 file = open(USER_NAME_DICTIONARY)
@@ -113,6 +116,7 @@ reader = f.readlines()
 RESPONDER_ADDRESSES = [row.strip() for row in reader]
 f.close()
 
+
 RESPONDER_TYPES = [
     'Vet', 'Police', 'Fire Agency', 'Animal Protection Groups', 'District Office'
 ]
@@ -120,6 +124,12 @@ RESPONDER_TYPES = [
 RESPONDER_NAMES = [
     VET_NAMES, POLICE_STATION_NAMES, FIRE_AGENCY_NAMES, ANIMAL_ORG_NAMES, DISTRICT_OFFICE_NAMES
 ]
+
+f = open(PLACEMENT_NAME_DICTIONARY)
+f.readline()
+reader = f.readlines()
+PLACEMENT_NAMES = [row.strip() for row in reader]
+f.close()
 
 # generate random values
 def gen_password():
@@ -231,6 +241,16 @@ def gen_all_channels(cursor):
     count = cursor.rowcount
     print(count, "Record inserted successfully into channel table")
 
+def gen_all_placements(cursor):
+    global PLACEMENT_NAMES
+    global SHORT_ADDRESSES
+    idx = 0
+    insert_query = """INSERT INTO Placement(placementid, name, address, phonenumber) VALUES(%s, %s, %s, %s)"""
+    for name in PLACEMENT_NAMES:
+        record = (idx, name, random.choice(SHORT_ADDRESSES), gen_phonenumber())
+        idx += 1
+        cursor.execute(insert_query, record)
+
 # gen events
 def gen_events(cursor, num_of_events):
     global CITY, DISTRICTS
@@ -281,6 +301,30 @@ def get_num_of_channels(cursor):
     cursor.execute(select_query)
     NUM_OF_CHANNELS = cursor.fetchone()[0]
 
+def get_event_ids(cursor):
+    global EVENT_ID_ARRAY
+    select_query = "SELECT eventid FROM Event;"
+    cursor.execute(select_query)
+    eventids = cursor.fetchall()
+    EVENT_ID_ARRAY = [row[0] for row in eventids]
+
+def get_placement_ids(cursor):
+    global PLACEMENT_ID_ARRAY
+    select_query = "SELECT placementid FROM placement;"
+    cursor.execute(select_query)
+    placementids = cursor.fetchall()
+    PLACEMENT_ID_ARRAY = [row[0] for row in placementids]
+
+def gen_event_animals(cursor):
+    global MAX_NUM_ANIMALS_PER_EVENT
+    insert_query = """INSERT INTO Animal(EventId, Type, Description, PlacementId) VALUES(%s, %s, %s, %s);"""
+    num_animals = random.randint(1, MAX_NUM_ANIMALS_PER_EVENT)
+    for eid in EVENT_ID_ARRAY:
+        for _ in range(num_animals):
+            record = (eid, random.choice(ANIMAL_TYPES), "This is a description", random.choice(PLACEMENT_ID_ARRAY))
+            cursor.execute(insert_query, record)
+
+
 conn = psycopg2.connect(
     host="127.0.0.1",
     port="5432",
@@ -291,17 +335,24 @@ conn = psycopg2.connect(
 
 cursor = conn.cursor()
 
-gen_all_channels(cursor)
+# gen_all_channels(cursor)
 get_num_of_channels(cursor)
 
-gen_all_users(cursor, 1000)
+# gen_all_users(cursor, 1000)
 get_all_userids(cursor)
 
-gen_all_responders(cursor)
+# gen_all_responders(cursor)
 get_all_responderids(cursor)
 
-gen_events(cursor, 1000)
+# gen_events(cursor, 1000)
+get_event_ids(cursor)
 
-gen_user_sub_records(cursor, 500)
-gen_responder_sub_records(cursor, 500)
+# gen_user_sub_records(cursor, 500)
+# gen_responder_sub_records(cursor, 500)
+
+gen_all_placements(cursor)
+get_placement_ids(cursor)
+
+gen_event_animals(cursor)
+
 conn.commit()
