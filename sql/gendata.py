@@ -21,6 +21,8 @@ POLICE_STATION_DICTIONARY = './csv/policeagency_names.csv'
 SHORT_ADDRESS_DICTIONARY = './csv/short_address.csv'
 RESPONDER_ADDRESS_DICTIONARY = './csv/responder_address.csv'
 PLACEMENT_NAME_DICTIONARY = './csv/placement_names.csv'
+PASSWORD_DICTIONARY_1 = './csv/bcrypt_password.csv'
+PASSWORD_DICTIONARY_2 = './csv/bcrypt_password2.csv'
 
 CITY = ['Taipei', 'New Taipei']
 DISTRICTS = [
@@ -116,6 +118,17 @@ reader = f.readlines()
 RESPONDER_ADDRESSES = [row.strip() for row in reader]
 f.close()
 
+f = open(PASSWORD_DICTIONARY_1)
+f.readline()
+reader = f.readlines()
+BCRYPT_PASSWORDS = [row.strip() for row in reader]
+f.close()
+
+f = open(PASSWORD_DICTIONARY_2)
+f.readline()
+reader = f.readlines()
+BCRYPT_PASSWORDS += [row.strip() for row in reader]
+f.close()
 
 RESPONDER_TYPES = [
     'Vet', 'Police', 'Fire Agency', 'Animal Protection Groups', 'District Office'
@@ -132,7 +145,7 @@ PLACEMENT_NAMES = [row.strip() for row in reader]
 f.close()
 
 # generate random values
-def gen_password():
+def manual_gen_password():
     global PASSWORD_LEN
     len = random.choice(PASSWORD_LEN)
     letters = string.ascii_letters + string.digits
@@ -140,6 +153,10 @@ def gen_password():
     salt = bcrypt.gensalt()
     hashed = bcrypt.hashpw(passwd.encode(), salt).decode()
     return hashed
+
+def gen_password():
+    global BCRYPT_PASSWORDS
+    return random.choice(BCRYPT_PASSWORDS)
 
 def gen_phonenumber():
     global PHONENUM_LEN
@@ -175,19 +192,11 @@ def gen_all_users(cursor, num_of_users):
     global USER_STATUS, USER_STATUS_PROB
     insert_query = """INSERT INTO Users(password, name, email, phonenumber, status) VALUES(%s, %s, %s, %s, %s);"""
 
-    name = gen_user_name()
-
-    records = [(
-            gen_password(),
-            name,
-            gen_user_email(name),
-            gen_phonenumber(),
-            np.random.choice(USER_STATUS, p=USER_STATUS_PROB)
-        ) for _ in range(num_of_users)]
-
-    print(records)
     for i in range(num_of_users):
-        cursor.execute(insert_query, records[i])
+        name = gen_user_name()
+        record = (gen_password(), name, gen_user_email(name), gen_phonenumber(), np.random.choice(USER_STATUS, p=USER_STATUS_PROB))
+        cursor.execute(insert_query, record)
+    print("Generated all users")
 
 
 # gen responders
@@ -211,7 +220,8 @@ def gen_user_sub_records(cursor, num_of_records):
     assert(NUM_OF_CHANNELS > 0)
     insert_query = """INSERT INTO UserSubscriptionRecord(channelid, userid) VALUES(%s, %s);"""
     records = [(random.choice(range(NUM_OF_CHANNELS)), random.choice(USER_ID_ARRAY)) for _ in range(num_of_records)]
-    for i in range(num_of_records):
+    records = list(set(records))
+    for i in range(len(records)):
         cursor.execute(insert_query, records[i])
     print("Generated user subscription records")
 
@@ -222,7 +232,8 @@ def gen_responder_sub_records(cursor, num_of_records):
     assert(NUM_OF_CHANNELS > 0)
     insert_query = """INSERT INTO ResponderSubscriptionRecord(channelid, responderid) VALUES(%s, %s);"""
     records = [(random.choice(range(NUM_OF_CHANNELS)), random.choice(RESPONDER_ID_ARRAY)) for _ in range(num_of_records)]
-    for i in range(num_of_records):
+    records = list(set(records))
+    for i in range(len(records)):
         cursor.execute(insert_query, records[i])
     print("Generated responder subscription records")
 
@@ -324,7 +335,6 @@ def gen_event_animals(cursor):
             record = (eid, random.choice(ANIMAL_TYPES), "This is a description", random.choice(PLACEMENT_ID_ARRAY))
             cursor.execute(insert_query, record)
 
-
 conn = psycopg2.connect(
     host="127.0.0.1",
     port="5432",
@@ -335,24 +345,41 @@ conn = psycopg2.connect(
 
 cursor = conn.cursor()
 
-# gen_all_channels(cursor)
+# generate all channels
+gen_all_channels(cursor)
 get_num_of_channels(cursor)
+conn.commit()
 
-# gen_all_users(cursor, 1000)
+# generate users
+gen_all_users(cursor, 10000)
 get_all_userids(cursor)
+conn.commit()
 
-# gen_all_responders(cursor)
+# generate responders
+gen_all_responders(cursor)
 get_all_responderids(cursor)
+conn.commit()
 
-# gen_events(cursor, 1000)
+# generate events
+gen_events(cursor, 10000)
 get_event_ids(cursor)
+conn.commit()
 
-# gen_user_sub_records(cursor, 500)
-# gen_responder_sub_records(cursor, 500)
+# generate user subscription records
+gen_user_sub_records(cursor, 5000)
+conn.commit()
 
+# generate responder subscription records
+gen_responder_sub_records(cursor, 5000)
+conn.commit()
+
+# generate placements
 gen_all_placements(cursor)
 get_placement_ids(cursor)
-
-gen_event_animals(cursor)
-
 conn.commit()
+
+# generate event animals
+gen_event_animals(cursor)
+conn.commit()
+
+conn.close()

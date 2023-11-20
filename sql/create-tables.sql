@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS Event(
 
 CREATE TABLE IF NOT EXISTS Placement(
     PlacementId INT NOT NULL,
-    Name VARCHAR(20) NOT NULL,
+    Name VARCHAR(40) NOT NULL,
     Address VARCHAR(30),
     PhoneNumber CHAR(10),
     PRIMARY KEY(PlacementId)
