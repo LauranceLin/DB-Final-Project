@@ -385,28 +385,28 @@ conn = psycopg2.connect(
 cursor = conn.cursor()
 
 # generate all channels
-# gen_all_channels(cursor)
+gen_all_channels(cursor)
 get_num_of_channels(cursor)
-# conn.commit()
+conn.commit()
 
 # generate users
-# gen_all_users(cursor, 500000)
+gen_all_users(cursor, 500000)
 get_all_userids(cursor)
-# conn.commit()
+conn.commit()
 
 # generate responders
-# gen_all_responders(cursor)
+gen_all_responders(cursor)
 get_all_responderids(cursor)
-# conn.commit()
+conn.commit()
 
 # generate events
-# gen_events(cursor, 500000)
+gen_events(cursor, 500000)
 get_event_ids(cursor)
-# conn.commit()
+conn.commit()
 
 # generate user subscription records
-# gen_user_sub_records(cursor, 500000)
-# conn.commit()
+gen_user_sub_records(cursor, 500000)
+conn.commit()
 
 # generate responder subscription records
 gen_responder_sub_records(cursor, 500000)
