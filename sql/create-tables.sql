@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS Users(
     Password CHAR(60) NOT NULL,
     Name VARCHAR(20) NOT NULL,
     Email VARCHAR(30) NOT NULL,
-    PhoneNumber CHAR(10) NOT NULL UNIQUE,
+    PhoneNumber CHAR(10) NOT NULL,
     Status VARCHAR(15) NOT NULL,
     PRIMARY KEY(UserId)
 );
@@ -20,8 +20,8 @@ CREATE TABLE IF NOT EXISTS Responder(
     Password CHAR(60) NOT NULL,
     Email VARCHAR(30) NOT NULL, -- Add a constraint checking on the email format
     PhoneNumber CHAR(10) NOT NULL UNIQUE,
-    ResponderType VARCHAR(30) NOT NULL,
-    Address VARCHAR(30) NOT NULL,
+    ResponderType VARCHAR(60) NOT NULL,
+    Address VARCHAR(60) NOT NULL,
     PRIMARY KEY(ResponderId)
 );
 

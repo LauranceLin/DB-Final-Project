@@ -1,4 +1,5 @@
 import psycopg2
+import psycopg2.extras
 import bcrypt
 import string
 import random
@@ -6,6 +7,7 @@ import csv
 import numpy as np
 import datetime
 from faker import Faker
+from multiprocessing import Pool
 
 fake = Faker()
 USER_STATUS = ['active', 'banned']
@@ -187,110 +189,144 @@ def gen_user_email(user_name):
     return email
 
 # gen users
+
+def gen_user(i):
+    global USER_STATUS, USER_STATUS_PROB
+    name = gen_user_name()
+    return (gen_password(), name, gen_user_email(name), gen_phonenumber(), np.random.choice(USER_STATUS, p=USER_STATUS_PROB))
+
 def gen_all_users(cursor, num_of_users):
     global USER_ID_ARRAY
     global USER_STATUS, USER_STATUS_PROB
-    insert_query = """INSERT INTO Users(password, name, email, phonenumber, status) VALUES(%s, %s, %s, %s, %s);"""
+    insert_query = """INSERT INTO Users(password, name, email, phonenumber, status) VALUES %s;"""
+    records = []
 
-    for i in range(num_of_users):
-        name = gen_user_name()
-        record = (gen_password(), name, gen_user_email(name), gen_phonenumber(), np.random.choice(USER_STATUS, p=USER_STATUS_PROB))
-        cursor.execute(insert_query, record)
+    with Pool(processes=16) as pool:
+        records = pool.map(gen_user, range(num_of_users))
+
+    print("About to insert all users")
+    psycopg2.extras.execute_values(cursor, insert_query, records, template=None, page_size=100)
     print("Generated all users")
 
 
 # gen responders
 def gen_all_responders(cursor):
     global RESPONDER_NAMES, RESPONDER_TYPES, RESPONDER_ID_ARRAY
-    insert_query = """INSERT INTO Responder(respondername, password, email, phonenumber, respondertype, address) VALUES(%s, %s, %s, %s, %s, %s);"""
-
+    insert_query = """INSERT INTO Responder(respondername, password, email, phonenumber, respondertype, address) VALUES %s;"""
+    records = []
     for i in range(len(RESPONDER_TYPES)):
         type = RESPONDER_TYPES[i]
         org = RESPONDER_NAMES[i]
         for responder_name in org:
-            record = (responder_name, gen_password(), gen_org_email(responder_name), gen_phonenumber(), type, random.choice(RESPONDER_ADDRESSES))
-            cursor.execute(insert_query, record)
+            records.append((responder_name, gen_password(), gen_org_email(responder_name), gen_phonenumber(), type, random.choice(RESPONDER_ADDRESSES)))
+    print("About to insert all responders")
+    psycopg2.extras.execute_values(cursor, insert_query, records, template=None, page_size=100)
     print("Generated all responders")
 
 
 # user subscription records
-def gen_user_sub_records(cursor, num_of_records):
+def gen_user_sub(i):
     global USER_ID_ARRAY
     global NUM_OF_CHANNELS
+
+    return (random.choice(range(NUM_OF_CHANNELS)), random.choice(USER_ID_ARRAY))
+
+def gen_user_sub_records(cursor, num_of_records):
+    global NUM_OF_CHANNELS
     assert(NUM_OF_CHANNELS > 0)
-    insert_query = """INSERT INTO UserSubscriptionRecord(channelid, userid) VALUES(%s, %s);"""
-    records = [(random.choice(range(NUM_OF_CHANNELS)), random.choice(USER_ID_ARRAY)) for _ in range(num_of_records)]
+    insert_query = """INSERT INTO UserSubscriptionRecord(channelid, userid) VALUES %s;"""
+
+    with Pool(processes=16) as pool:
+        records = pool.map(gen_user_sub, range(num_of_records))
+
     records = list(set(records))
-    for i in range(len(records)):
-        cursor.execute(insert_query, records[i])
+    psycopg2.extras.execute_values(cursor, insert_query, records, template=None, page_size=100)
+
     print("Generated user subscription records")
 
 # user subscription records
+def gen_respond_sub(i):
+    global RESPONDER_ID_ARRAY
+    global NUM_OF_CHANNELS
+    return (random.choice(range(NUM_OF_CHANNELS)), random.choice(RESPONDER_ID_ARRAY))
+
 def gen_responder_sub_records(cursor, num_of_records):
     global RESPONDER_ID_ARRAY
     global NUM_OF_CHANNELS
     assert(NUM_OF_CHANNELS > 0)
-    insert_query = """INSERT INTO ResponderSubscriptionRecord(channelid, responderid) VALUES(%s, %s);"""
-    records = [(random.choice(range(NUM_OF_CHANNELS)), random.choice(RESPONDER_ID_ARRAY)) for _ in range(num_of_records)]
+    insert_query = """INSERT INTO ResponderSubscriptionRecord(channelid, responderid) VALUES %s"""
+
+    with Pool(processes=16) as pool:
+        records = pool.map(gen_respond_sub, range(num_of_records))
+
     records = list(set(records))
-    for i in range(len(records)):
-        cursor.execute(insert_query, records[i])
+
+    psycopg2.extras.execute_values(cursor, insert_query, records, template=None, page_size=100)
     print("Generated responder subscription records")
 
 # gen channels
 def gen_all_channels(cursor):
     global NUM_OF_CHANNELS
-    insert_query = """INSERT INTO Channel(channelid, eventdistrict, eventtype, eventanimal) VALUES(%s, %s, %s, %s);"""
+    insert_query = """INSERT INTO Channel(channelid, eventdistrict, eventtype, eventanimal) VALUES %s;"""
     idx = 0
+    records = []
     for dist in ([None] + DISTRICTS[0] + DISTRICTS[1]):
         for eventtype in ([None] + EVENT_TYPES):
             for animal in ([None] + ANIMAL_TYPES):
-                record = (idx, dist, eventtype, animal)
-                cursor.execute(insert_query, record)
+                records.append((idx, dist, eventtype, animal))
                 idx += 1
     NUM_OF_CHANNELS = idx
-    count = cursor.rowcount
-    print(count, "Record inserted successfully into channel table")
+    psycopg2.extras.execute_values(cursor, insert_query, records, template=None, page_size=100)
+
+    print("Channels inserted successfully into channel table")
 
 def gen_all_placements(cursor):
     global PLACEMENT_NAMES
     global SHORT_ADDRESSES
     idx = 0
-    insert_query = """INSERT INTO Placement(placementid, name, address, phonenumber) VALUES(%s, %s, %s, %s)"""
+    records = []
+    insert_query = """INSERT INTO Placement(placementid, name, address, phonenumber) VALUES %s;"""
     for name in PLACEMENT_NAMES:
-        record = (idx, name, random.choice(SHORT_ADDRESSES), gen_phonenumber())
+        records.append((idx, name, random.choice(SHORT_ADDRESSES), gen_phonenumber()))
         idx += 1
-        cursor.execute(insert_query, record)
+    psycopg2.extras.execute_values(cursor, insert_query, records, template=None, page_size=100)
+
+    print("Generated all placements")
 
 # gen events
+def gen_event(i):
+    global CITY, DISTRICTS, SHORT_ADDRESSES, EVENT_STATUS, EVENT_STATUS_PROB, RESPONDER_ID_ARRAY, USER_ID_ARRAY
+
+    cityindex = random.choice(range(len(CITY)))
+    status = np.random.choice(EVENT_STATUS, p=EVENT_STATUS_PROB)
+    random.choice(RESPONDER_ID_ARRAY)
+
+    if(status == EVENT_STATUS[2] or status == EVENT_STATUS[3]):
+        responder = None
+    else:
+        responder = random.choice(RESPONDER_ID_ARRAY)
+
+    return (
+        random.choice(EVENT_TYPES),
+        random.choice(USER_ID_ARRAY),
+        responder,
+        status,
+        "this is a short description",
+        CITY[cityindex],
+        random.choice(DISTRICTS[cityindex]),
+        random.choice(SHORT_ADDRESSES),
+        gen_time_stamp())
+
 def gen_events(cursor, num_of_events):
     global CITY, DISTRICTS
-    insert_query = """INSERT INTO Event(eventtype, userid, responderid, status, shortdescription, city, district, shortaddress, createdat) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s);"""
+    insert_query = """INSERT INTO Event(eventtype, userid, responderid, status, shortdescription, city, district, shortaddress, createdat) VALUES %s;"""
 
     # "Ongoing", "Resolved", "Unresolved", "Deleted", "Failed", "False Alarm"
+    records = []
+    with Pool(processes=16) as pool:
+        records = pool.map(gen_event, range(num_of_events))
 
-    for _ in range(num_of_events):
-        cityindex = random.choice(range(len(CITY)))
-        status = np.random.choice(EVENT_STATUS, p=EVENT_STATUS_PROB)
-        random.choice(RESPONDER_ID_ARRAY)
-
-        if(status == EVENT_STATUS[2] or status == EVENT_STATUS[3]):
-            responder = None
-        else:
-            responder = random.choice(RESPONDER_ID_ARRAY)
-
-        record = (
-            random.choice(EVENT_TYPES),
-            random.choice(USER_ID_ARRAY),
-            responder,
-            status,
-            "this is a short description",
-            CITY[cityindex],
-            random.choice(DISTRICTS[cityindex]),
-            random.choice(SHORT_ADDRESSES),
-            gen_time_stamp())
-
-        cursor.execute(insert_query, record)
+    psycopg2.extras.execute_values(cursor, insert_query, records, template=None, page_size=100)
 
 def get_all_userids(cursor):
     global USER_ID_ARRAY
@@ -328,12 +364,15 @@ def get_placement_ids(cursor):
 
 def gen_event_animals(cursor):
     global MAX_NUM_ANIMALS_PER_EVENT
-    insert_query = """INSERT INTO Animal(EventId, Type, Description, PlacementId) VALUES(%s, %s, %s, %s);"""
+    insert_query = """INSERT INTO Animal(EventId, Type, Description, PlacementId) VALUES %s;"""
+    records = []
     num_animals = random.randint(1, MAX_NUM_ANIMALS_PER_EVENT)
     for eid in EVENT_ID_ARRAY:
         for _ in range(num_animals):
-            record = (eid, random.choice(ANIMAL_TYPES), "This is a description", random.choice(PLACEMENT_ID_ARRAY))
-            cursor.execute(insert_query, record)
+            records.append((eid, random.choice(ANIMAL_TYPES), "This is a description", random.choice(PLACEMENT_ID_ARRAY)))
+    psycopg2.extras.execute_values(cursor, insert_query, records, template=None, page_size=100)
+
+    print("Generated all animals")
 
 conn = psycopg2.connect(
     host="127.0.0.1",
@@ -346,31 +385,31 @@ conn = psycopg2.connect(
 cursor = conn.cursor()
 
 # generate all channels
-gen_all_channels(cursor)
+# gen_all_channels(cursor)
 get_num_of_channels(cursor)
-conn.commit()
+# conn.commit()
 
 # generate users
-gen_all_users(cursor, 10000)
+# gen_all_users(cursor, 500000)
 get_all_userids(cursor)
-conn.commit()
+# conn.commit()
 
 # generate responders
-gen_all_responders(cursor)
+# gen_all_responders(cursor)
 get_all_responderids(cursor)
-conn.commit()
+# conn.commit()
 
 # generate events
-gen_events(cursor, 10000)
+# gen_events(cursor, 500000)
 get_event_ids(cursor)
-conn.commit()
+# conn.commit()
 
 # generate user subscription records
-gen_user_sub_records(cursor, 5000)
-conn.commit()
+# gen_user_sub_records(cursor, 500000)
+# conn.commit()
 
 # generate responder subscription records
-gen_responder_sub_records(cursor, 5000)
+gen_responder_sub_records(cursor, 500000)
 conn.commit()
 
 # generate placements
