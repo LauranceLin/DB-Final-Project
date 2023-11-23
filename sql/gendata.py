@@ -83,54 +83,21 @@ for row in name_reader:
 prob = np.divide(prob, np.array(sum))
 
 
-# responder names
-f = open(ANIMAL_ORG_NAME_DICTIONARY)
-f.readline()
-reader = f.readlines()
-ANIMAL_ORG_NAMES = [row.strip() for row in reader]
-f.close()
+def get_values(mylist, file_name):
+    f = open(file_name)
+    f.readline()
+    reader = f.readlines()
+    mylist += [row.strip() for row in reader]
+    f.close()
 
-f = open(VET_NAME_DICTIONARY)
-f.readline()
-reader = f.readlines()
-VET_NAMES = [row.strip() for row in reader]
-f.close()
-
-f = open(FIRE_AGENCY_DICTIONARY)
-f.readline()
-reader = f.readlines()
-FIRE_AGENCY_NAMES = [row.strip() for row in reader]
-f.close()
-
-f = open(POLICE_STATION_DICTIONARY)
-f.readline()
-reader = f.readlines()
-POLICE_STATION_NAMES = [row.strip() for row in reader]
-f.close()
-
-f = open(SHORT_ADDRESS_DICTIONARY)
-f.readline()
-reader = f.readlines()
-SHORT_ADDRESSES = [row.strip() for row in reader]
-f.close()
-
-f = open(RESPONDER_ADDRESS_DICTIONARY)
-f.readline()
-reader = f.readlines()
-RESPONDER_ADDRESSES = [row.strip() for row in reader]
-f.close()
-
-f = open(PASSWORD_DICTIONARY_1)
-f.readline()
-reader = f.readlines()
-BCRYPT_PASSWORDS = [row.strip() for row in reader]
-f.close()
-
-f = open(PASSWORD_DICTIONARY_2)
-f.readline()
-reader = f.readlines()
-BCRYPT_PASSWORDS += [row.strip() for row in reader]
-f.close()
+ANIMAL_ORG_NAMES = []
+VET_NAMES = []
+FIRE_AGENCY_NAMES = []
+POLICE_STATION_NAMES = []
+SHORT_ADDRESSES = []
+RESPONDER_ADDRESSES = []
+BCRYPT_PASSWORDS = []
+PLACEMENT_NAMES = []
 
 RESPONDER_TYPES = [
     'Vet', 'Police', 'Fire Agency', 'Animal Protection Groups', 'District Office'
@@ -140,11 +107,15 @@ RESPONDER_NAMES = [
     VET_NAMES, POLICE_STATION_NAMES, FIRE_AGENCY_NAMES, ANIMAL_ORG_NAMES, DISTRICT_OFFICE_NAMES
 ]
 
-f = open(PLACEMENT_NAME_DICTIONARY)
-f.readline()
-reader = f.readlines()
-PLACEMENT_NAMES = [row.strip() for row in reader]
-f.close()
+get_values(ANIMAL_ORG_NAMES, ANIMAL_ORG_NAME_DICTIONARY)
+get_values(VET_NAMES, VET_NAME_DICTIONARY)
+get_values(FIRE_AGENCY_NAMES, FIRE_AGENCY_DICTIONARY)
+get_values(POLICE_STATION_NAMES, POLICE_STATION_DICTIONARY)
+get_values(SHORT_ADDRESSES, SHORT_ADDRESS_DICTIONARY)
+get_values(RESPONDER_ADDRESSES, RESPONDER_ADDRESS_DICTIONARY)
+get_values(BCRYPT_PASSWORDS, PASSWORD_DICTIONARY_1)
+get_values(BCRYPT_PASSWORDS, PASSWORD_DICTIONARY_2)
+get_values(PLACEMENT_NAMES, PLACEMENT_NAME_DICTIONARY)
 
 # generate random values
 def manual_gen_password():
@@ -204,7 +175,6 @@ def gen_all_users(cursor, num_of_users):
     with Pool(processes=16) as pool:
         records = pool.map(gen_user, range(num_of_users))
 
-    print("About to insert all users")
     psycopg2.extras.execute_values(cursor, insert_query, records, template=None, page_size=100)
     print("Generated all users")
 
@@ -219,10 +189,9 @@ def gen_all_responders(cursor):
         org = RESPONDER_NAMES[i]
         for responder_name in org:
             records.append((responder_name, gen_password(), gen_org_email(responder_name), gen_phonenumber(), type, random.choice(RESPONDER_ADDRESSES)))
-    print("About to insert all responders")
+
     psycopg2.extras.execute_values(cursor, insert_query, records, template=None, page_size=100)
     print("Generated all responders")
-
 
 # user subscription records
 def gen_user_sub(i):
@@ -241,7 +210,6 @@ def gen_user_sub_records(cursor, num_of_records):
 
     records = list(set(records))
     psycopg2.extras.execute_values(cursor, insert_query, records, template=None, page_size=100)
-
     print("Generated user subscription records")
 
 # user subscription records
@@ -277,7 +245,6 @@ def gen_all_channels(cursor):
                 idx += 1
     NUM_OF_CHANNELS = idx
     psycopg2.extras.execute_values(cursor, insert_query, records, template=None, page_size=100)
-
     print("Channels inserted successfully into channel table")
 
 def gen_all_placements(cursor):
@@ -290,7 +257,6 @@ def gen_all_placements(cursor):
         records.append((idx, name, random.choice(SHORT_ADDRESSES), gen_phonenumber()))
         idx += 1
     psycopg2.extras.execute_values(cursor, insert_query, records, template=None, page_size=100)
-
     print("Generated all placements")
 
 # gen events
@@ -327,7 +293,24 @@ def gen_events(cursor, num_of_events):
         records = pool.map(gen_event, range(num_of_events))
 
     psycopg2.extras.execute_values(cursor, insert_query, records, template=None, page_size=100)
+    print("Generated all events")
 
+# gen event animals
+def gen_event_animals(cursor):
+    global MAX_NUM_ANIMALS_PER_EVENT
+    insert_query = """INSERT INTO Animal(EventId, Type, Description, PlacementId) VALUES %s;"""
+    records = []
+    num_animals = random.randint(1, MAX_NUM_ANIMALS_PER_EVENT)
+
+    for eid in EVENT_ID_ARRAY:
+        for _ in range(num_animals):
+            records.append((eid, random.choice(ANIMAL_TYPES), "This is a description", random.choice(PLACEMENT_ID_ARRAY)))
+
+    psycopg2.extras.execute_values(cursor, insert_query, records, template=None, page_size=100)
+    print("Generated all animals")
+
+
+# get db values
 def get_all_userids(cursor):
     global USER_ID_ARRAY
     select_query = "SELECT userid FROM Users;"
@@ -362,18 +345,8 @@ def get_placement_ids(cursor):
     placementids = cursor.fetchall()
     PLACEMENT_ID_ARRAY = [row[0] for row in placementids]
 
-def gen_event_animals(cursor):
-    global MAX_NUM_ANIMALS_PER_EVENT
-    insert_query = """INSERT INTO Animal(EventId, Type, Description, PlacementId) VALUES %s;"""
-    records = []
-    num_animals = random.randint(1, MAX_NUM_ANIMALS_PER_EVENT)
-    for eid in EVENT_ID_ARRAY:
-        for _ in range(num_animals):
-            records.append((eid, random.choice(ANIMAL_TYPES), "This is a description", random.choice(PLACEMENT_ID_ARRAY)))
-    psycopg2.extras.execute_values(cursor, insert_query, records, template=None, page_size=100)
 
-    print("Generated all animals")
-
+# db connection
 conn = psycopg2.connect(
     host="127.0.0.1",
     port="5432",
