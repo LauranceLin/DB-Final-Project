@@ -1,20 +1,20 @@
-from flask import Flask, session, request, redirect, url_for
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-import json
+from flask import Flask, request, redirect, url_for
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from schema.database import get_db_session
 from schema.models import *
+import bcrypt
 
 app = Flask(__name__)
 app.secret_key = 'NnSELOhwoPri1o-RZR3d1A'
 
 login_manager = LoginManager()
-login_manager.init_app(app)
 login_manager.login_view = 'login'
+login_manager.init_app(app)
 
 @login_manager.user_loader
-def user_loader(user_id):
+def user_loader(userid):
     db_session = get_db_session()
-    user = db_session.query(Users).filter(Users.userid == user_id).first()
+    user = db_session.query(Users).filter(Users.userid == userid).first()
     db_session.close()
     return user
 
@@ -23,7 +23,7 @@ def user_loader(user_id):
 def register():
     if request.method == "GET":
         return "Return register page"
-    print(request)
+
     email = request.values['email']
     password = request.values['password']
     name = request.values['name']
@@ -31,7 +31,9 @@ def register():
     status = UsersStatus.ACTIVE.value
     db_session = get_db_session()
 
-    new_user = Users(email=email, password=password, phonenumber=phonenumber, name=name, status=status)
+    hashed_password = bcrypt.hashpw(password, bcrypt.gensalt())
+    new_user = Users(email=email, password=hashed_password, phonenumber=phonenumber, name=name, status=status)
+
     user_string = str(new_user)
     db_session.add(new_user)
 
@@ -43,7 +45,6 @@ def register():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-
     # GET
     if request.method == "GET":
         return "Login page!"
@@ -53,20 +54,16 @@ def login():
     password = request.values['password']
 
     db_session = get_db_session()
-    # check db for this userid
-    # look for the user in the database and return it as a User type
-    user = db_session.query(Users).filter(Users.email == email, Users.password == password).first()
-
+    user = db_session.query(Users).filter(Users.email == email).first()
     db_session.close()
 
-    if user is None:
-        print("User does not exist!")
-        return redirect(url_for("login"))
-    else:
+    if user and bcrypt.checkpw(password.encode(), user.password.encode()):
         login_user(user)
         print("User logged in!")
         return redirect(url_for("notifications"))
-
+    else:
+        print("Login failed")
+        return redirect(url_for("login"))
 
 @app.route("/notifications", methods=["GET"])
 @login_required
@@ -86,16 +83,16 @@ def add_events():
     if request.method == "GET":
         return "return the add event page"
     else:
-        # remember to do type checking here
         db_session = get_db_session()
+        # TODO: Create an event and add to database
         db_session.close()
         return "Create an event and insert into the database"
 
-@app.route("/reported_events", methods=["GET"])
+@app.route("/reported_events/<eventid>", methods=["GET"])
 @login_required
 def reported_events():
     db_session = get_db_session()
-    # get recent events
+    # TODO: Query events in the range of [eventid, eventid+10]
     db_session.close()
     return "return index + 10 reported events, the client must send an index to indicate which page they are on"
 
@@ -103,15 +100,16 @@ def reported_events():
 @login_required
 def event():
     db_session = get_db_session()
-    # fetch the event information based on the event id
+    # TODO: fetch the event information based on the event id
     db_session.close()
 
     return "return event specifics"
 
 @app.route("/logout")
+@login_required
 def logout():
     logout_user()
-    return "logged out"
+    return "logout successful"
 
 if __name__ == '__main__':
     app.run()

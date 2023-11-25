@@ -61,9 +61,6 @@ class Users(Base, UserMixin):
         else:
             return False
 
-    # def is_authenticated(self):
-    #     return True
-
     def get_id(self):
         return str(self.userid)
 
