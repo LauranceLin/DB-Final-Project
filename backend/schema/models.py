@@ -50,16 +50,19 @@ class Users(Base, UserMixin):
     name: Mapped[str] = mapped_column('name', VARCHAR(20))
     email: Mapped[str] = mapped_column('email', VARCHAR(30))
     phonenumber: Mapped[str] = mapped_column('phonenumber', CHAR(10))
-    status:Mapped[UsersStatus] = mapped_column('status', VARCHAR(15))
+    status: Mapped[UsersStatus] = mapped_column('status', VARCHAR(15))
 
     def __str__(self):
         return f"Users: userid={self.userid}, password={self.password}, name={self.name}, email={self.email}, phonenumber={self.phonenumber}, status={self.status}"
 
     def is_active(self):
-        if self.status == UsersStatus.ACTIVE:
+        if self.status == UsersStatus.ACTIVE.value:
             return True
         else:
             return False
+
+    # def is_authenticated(self):
+    #     return True
 
     def get_id(self):
         return str(self.userid)

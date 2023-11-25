@@ -5,22 +5,17 @@ from schema.database import get_db_session
 from schema.models import *
 
 app = Flask(__name__)
+app.secret_key = 'NnSELOhwoPri1o-RZR3d1A'
+
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-# class User(UserMixin):
-#     def __init__(self, email, password):
-#         self.id = email
-#         self.password = password
-
 @login_manager.user_loader
 def user_loader(user_id):
     db_session = get_db_session()
-    # check db for this userid
-    user = db_session.query(Users).filter_by(Users.userid == user_id)
+    user = db_session.query(Users).filter(Users.userid == user_id).first()
     db_session.close()
-    # if exists, then return user --> what if doesn't exist?
     return user
 
 @app.route("/")
@@ -28,21 +23,23 @@ def user_loader(user_id):
 def register():
     if request.method == "GET":
         return "Return register page"
-
+    print(request)
     email = request.values['email']
     password = request.values['password']
     name = request.values['name']
     phonenumber = request.values['phonenumber']
-    status = UsersStatus.ACTIVE
+    status = UsersStatus.ACTIVE.value
+    db_session = get_db_session()
 
     new_user = Users(email=email, password=password, phonenumber=phonenumber, name=name, status=status)
-
-    db_session = get_db_session()
+    user_string = str(new_user)
     db_session.add(new_user)
+
+    # commit causes new_user to expire
     db_session.commit()
     db_session.close()
 
-    return "<p> Created new user: " + str(new_user) + "</p>"
+    return "Created new user: " +  user_string
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -58,14 +55,16 @@ def login():
     db_session = get_db_session()
     # check db for this userid
     # look for the user in the database and return it as a User type
-    user = db_session.query(Users).filter(Users.email == email, Users.password == password)
+    user = db_session.query(Users).filter(Users.email == email, Users.password == password).first()
 
     db_session.close()
 
     if user is None:
+        print("User does not exist!")
         return redirect(url_for("login"))
     else:
         login_user(user)
+        print("User logged in!")
         return redirect(url_for("notifications"))
 
 
@@ -73,10 +72,13 @@ def login():
 @login_required
 def notifications():
     user = current_user
-    # get notification history based on user id
+    print(str(user.userid))
+
     db_session = get_db_session()
+    # TODO: get notification history based on user id
     db_session.close()
-    return user.id
+
+    return "Retrieved notifications!"
 
 @app.route("/addevent", methods=["GET", "POST"])
 @login_required
