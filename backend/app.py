@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, url_for
+from flask import Flask, request, redirect, url_for, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from schema.database import get_db_session
 from schema.models import *
@@ -121,17 +121,17 @@ def add_event():
 
         # error checking for event
         if len(shortaddress) > 30:
-            return json.dumps({"error": "Short address too long"})
+            return jsonify({"error": "Short address too long"})
 
         if len(shortdescription) > 100:
-            return json.dumps({"error": "Short description too long"})
+            return jsonify({"error": "Short description too long"})
 
         try:
             eventtype = int(eventtype)
             if not check_eventtype(eventtype=eventtype):
                 raise
         except:
-            return json.dumps({"error": "Eventtype doesn't exist"})
+            return jsonify({"error": "Eventtype doesn't exist"})
 
         try:
             city = int(city)
@@ -139,21 +139,21 @@ def add_event():
             if not check_location(city=city, district=district):
                 raise
         except:
-            return json.dumps({"error": "Location doesn't exist"})
+            return jsonify({"error": "Location doesn't exist"})
 
         # error checking for animal
         try:
             eventanimals = json.loads(eventanimals)
         except:
-            json.dumps({"error": "eventanimals should be a list of dictionaries"})
+            jsonify({"error": "eventanimals should be a list of dictionaries"})
 
         for animal in eventanimals:
             animaltype = animal['animaltype']
             animaldescription = animal['animaldescription']
             if not check_animaltype(animaltype=animaltype):
-                return json.dumps({"error": "AnimalType doesn't exist"})
+                return jsonify({"error": "AnimalType doesn't exist"})
             if len(animaldescription) > 100:
-                return json.dumps({"error": "Animal description too long"})
+                return jsonify({"error": "Animal description too long"})
 
         # create event
         eventtype = EVENT_TYPE[eventtype]
@@ -224,7 +224,7 @@ def event(eventid):
 
     db_session.close()
 
-    return json.dumps(result)
+    return jsonify(result)
 
 @app.route("/logout")
 @login_required
