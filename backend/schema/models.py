@@ -1,46 +1,10 @@
-import enum
 from sqlalchemy import ForeignKey, Integer, String, CHAR, VARCHAR, TIMESTAMP
 from sqlalchemy.orm import Mapped, mapped_column
 from typing import Optional
 from flask_login import UserMixin
 
 from schema.database import Base, engine
-
-class UsersStatus(enum.Enum):
-    ACTIVE = "Active"
-    INACTIVE = "Banned"
-
-class EventType(enum.Enum):
-    ROADKILL = "Roadkill"
-    ANIMAL_BLOCK_TRAFFIC = "AnimalBlockTraffic"
-    STRAY_ANIMAL = "StrayAnimal"
-    ANIMAL_ATTACK = "AnimalAttack"
-    ANIMAL_ABUSE = "AnimalAbuse"
-    DANGEROUS_WILDLIFE_SIGHTING = "DangerousWildlifeSighting"
-    OTHER = "Other"
-
-class AnimalType(enum.Enum):
-    DOG = "Dog"
-    CAT = "Cat"
-    BIRD = "Bird"
-    SNAKE = "Snake"
-    DEER = "Deer"
-    MONKEY = "Monkey"
-    FISH = "Fish"
-    BEAR = "Bear"
-    OTHER = "Other"
-
-class NotificationType(enum.Enum):
-    EVENT = "Event"
-    WARNING = "Warning"
-
-class ResponderType(enum.Enum):
-    VET = "Vet"
-    POLICE = "Police Station"
-    FIREAGENCY = "FireAgency"
-    ANIMAL_PROTECTION_GROUP = "AnimalProtectionGroup"
-    DISTRICT_OFFICE = "DistrictOffice"
-    OTHER = "Other"
+from schema.enums import USERS_STATUS, UsersStatus
 
 class Users(Base, UserMixin):
     __tablename__ = "users"
@@ -50,13 +14,13 @@ class Users(Base, UserMixin):
     name: Mapped[str] = mapped_column('name', VARCHAR(20))
     email: Mapped[str] = mapped_column('email', VARCHAR(30))
     phonenumber: Mapped[str] = mapped_column('phonenumber', CHAR(10))
-    status: Mapped[UsersStatus] = mapped_column('status', VARCHAR(15))
+    status: Mapped[str] = mapped_column('status', VARCHAR(15))
 
     def __str__(self):
         return f"Users: userid={self.userid}, password={self.password}, name={self.name}, email={self.email}, phonenumber={self.phonenumber}, status={self.status}"
 
     def is_active(self):
-        if self.status == UsersStatus.ACTIVE.value:
+        if self.status == USERS_STATUS[UsersStatus.ACTIVE]:
             return True
         else:
             return False
@@ -91,7 +55,7 @@ class Event(Base):
     __tablename__ = "event"
 
     eventid: Mapped[int] = mapped_column("eventid", Integer, primary_key=True)
-    eventtype: Mapped[EventType] = mapped_column("eventtype", VARCHAR(30))
+    eventtype: Mapped[str] = mapped_column("eventtype", VARCHAR(30))
 
     # foreign key
     userid: Mapped[int] = mapped_column("userid", ForeignKey("users.userid"))
@@ -104,6 +68,11 @@ class Event(Base):
     district: Mapped[str] = mapped_column("district", VARCHAR(20), nullable=False)
     shortaddress: Mapped[str] = mapped_column("shortaddress", VARCHAR(30), nullable=False)
     createdat: Mapped[TIMESTAMP] = mapped_column("createdat", TIMESTAMP, nullable=False)
+
+    def __str__(self):
+        return f"Event: eventid={self.eventid}, eventtype={self.eventtype}, userid={self.userid}, responderid={self.responderid}" \
+        f"status={self.status}, shortdescription={self.shortdescription}, city={self.city}" \
+        f"district={self.district}, shortaddress={self.shortaddress}, createdat={self.createdat}"
 
 class EventImages(Base):
     __tablename__ = "eventimages"
@@ -132,7 +101,7 @@ class Animal(Base):
     animalid: Mapped[int] = mapped_column("animalid", primary_key=True)
     eventid: Mapped[int] = mapped_column("eventid", ForeignKey("event.eventid"))
     placementid: Mapped[int] = mapped_column("placementid", ForeignKey("placement.placementid"))
-    type: Mapped[AnimalType] = mapped_column("type", VARCHAR(6))
+    type: Mapped[str] = mapped_column("type", VARCHAR(6))
     description: Mapped[str] = mapped_column("description", VARCHAR(150))
 
 class Channel(Base):
@@ -140,8 +109,8 @@ class Channel(Base):
 
     channelid: Mapped[int] = mapped_column("channelid", Integer, primary_key=True)
     eventdistrict: Mapped[str] = mapped_column("eventdistrict", VARCHAR(20))
-    eventtype: Mapped[EventType] = mapped_column("eventtype", VARCHAR(30))
-    eventanimal: Mapped[AnimalType] = mapped_column("eventanimal", VARCHAR(15))
+    eventtype: Mapped[str] = mapped_column("eventtype", VARCHAR(30))
+    eventanimal: Mapped[str] = mapped_column("eventanimal", VARCHAR(15))
 
 class Warning(Base):
     __tablename__ = "warning"
@@ -175,14 +144,14 @@ class ResponderSubscriptionRecord(Base):
 
 class UserNotification(Base):
     __tablename__ = "usernotification"
-    notificationtype: Mapped[NotificationType] = mapped_column("notificationtype", VARCHAR(7))
+    notificationtype: Mapped[str] = mapped_column("notificationtype", VARCHAR(7))
     eventid: Mapped[int] = mapped_column("eventid", ForeignKey("event.eventid"), primary_key=True)
     notifieduserid: Mapped[int] = mapped_column("notifieduserid", ForeignKey("users.userid"), primary_key=True)
     notificationtimestamp: Mapped[TIMESTAMP] = mapped_column("notificationtimestamp", TIMESTAMP)
 
 class ResponderNotification(Base):
     __tablename__ = "respondernotification"
-    notificationtype: Mapped[NotificationType] = mapped_column("notificationtype", VARCHAR(7))
+    notificationtype: Mapped[str] = mapped_column("notificationtype", VARCHAR(7))
     eventid: Mapped[int] = mapped_column("eventid", ForeignKey("event.eventId"), primary_key=True)
     notifiedresponderid: Mapped[int] = mapped_column("notifiedresponderid", ForeignKey("responder.responderid"), primary_key=True)
     notificationtimestamp: Mapped[TIMESTAMP] = mapped_column("notificationtimestamp", TIMESTAMP)

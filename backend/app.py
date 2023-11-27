@@ -3,6 +3,9 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 from schema.database import get_db_session
 from schema.models import *
 import bcrypt
+import datetime
+from schema.enums import *
+import json
 
 app = Flask(__name__)
 app.secret_key = 'NnSELOhwoPri1o-RZR3d1A'
@@ -31,17 +34,16 @@ def register():
     status = UsersStatus.ACTIVE.value
     db_session = get_db_session()
 
-    hashed_password = bcrypt.hashpw(password, bcrypt.gensalt())
+    hashed_password = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
     new_user = Users(email=email, password=hashed_password, phonenumber=phonenumber, name=name, status=status)
 
-    user_string = str(new_user)
     db_session.add(new_user)
 
     # commit causes new_user to expire
     db_session.commit()
     db_session.close()
 
-    return "Created new user: " +  user_string
+    return "Created new user"
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -77,33 +79,154 @@ def notifications():
 
     return "Retrieved notifications!"
 
+# error checking functions
+def check_eventtype(eventtype):
+    print(eventtype)
+    print(EventType.EVENT_TYPE_LEN.value)
+    if eventtype < 0 or eventtype >= EventType.EVENT_TYPE_LEN.value:
+        print("heeee")
+        return False
+    print("haaaaa")
+    return True
+
+def check_location(city, district):
+    if city < 0 or city >= City.CITY_LEN.value:
+        return False
+    if district < 0 or district >= len(DISTRICTS[city]):
+        return False
+    return True
+
+def check_animaltype(animaltype):
+    if type(animaltype) is not int or animaltype < 0 or animaltype >= AnimalType.ANIMAL_TYPE_LEN.value:
+        return False
+    return True
+
 @app.route("/addevent", methods=["GET", "POST"])
 @login_required
-def add_events():
+def add_event():
     if request.method == "GET":
         return "return the add event page"
     else:
         db_session = get_db_session()
-        # TODO: Create an event and add to database
-        db_session.close()
-        return "Create an event and insert into the database"
 
-@app.route("/reported_events/<eventid>", methods=["GET"])
+        userid = current_user.userid
+        responderid = None
+        status = EVENT_STATUS[EventStatus.UNRESOLVED.value]
+
+        eventtype = request.values['eventtype']
+        shortdescription = request.values['shortdescription']
+        city = request.values['city']
+        district = request.values['district']
+        shortaddress = request.values['shortaddress']
+        createdat = datetime.datetime.now()
+        eventanimals = request.values['eventanimals']
+
+        # error checking for event
+        if len(shortaddress) > 30:
+            return json.dumps({"error": "Short address too long"})
+
+        if len(shortdescription) > 100:
+            return json.dumps({"error": "Short description too long"})
+
+        try:
+            eventtype = int(eventtype)
+            if not check_eventtype(eventtype=eventtype):
+                raise
+        except:
+            return json.dumps({"error": "Eventtype doesn't exist"})
+
+        try:
+            city = int(city)
+            district = int(district)
+            if not check_location(city=city, district=district):
+                raise
+        except:
+            return json.dumps({"error": "Location doesn't exist"})
+
+        # error checking for animal
+        try:
+            eventanimals = json.loads(eventanimals)
+        except:
+            json.dumps({"error": "eventanimals should be a list of dictionaries"})
+
+        for animal in eventanimals:
+            animaltype = animal['animaltype']
+            animaldescription = animal['animaldescription']
+            if not check_animaltype(animaltype=animaltype):
+                return json.dumps({"error": "AnimalType doesn't exist"})
+            if len(animaldescription) > 100:
+                return json.dumps({"error": "Animal description too long"})
+
+        # create event
+        eventtype = EVENT_TYPE[eventtype]
+
+        district_str = DISTRICTS[city][district]
+        city_str = CITIES[city]
+        animaltype = ANIMAL_TYPE[animaltype]
+
+        new_event = Event(eventtype=eventtype, \
+            userid=userid, \
+            responderid=responderid, \
+            status=status, \
+            shortdescription=shortdescription, \
+            city=city_str, district=district_str, \
+            shortaddress=shortaddress, \
+            createdat=createdat)
+
+        db_session.add(new_event)
+        db_session.flush()
+
+        print(f"Created new event with id: {new_event.eventid}")
+
+        # create animals
+        for animal in eventanimals:
+            new_animaltype = ANIMAL_TYPE[animal['animaltype']]
+            new_animaldescription = animal['animaldescription']
+            new_animal = Animal(eventid=new_event.eventid, \
+                                placementid=None, \
+                                type=new_animaltype, \
+                                description=new_animaldescription)
+            db_session.add(new_animal)
+            db_session.flush()
+            print(f"Created new animal with id: {new_animal.animalid}")
+
+        db_session.commit()
+        db_session.close()
+
+        # TODO: Send out notifications (preferably in a separate thread)
+
+        return "Created new event and animals"
+
+@app.route("/reported_events", methods=["GET"])
 @login_required
 def reported_events():
     db_session = get_db_session()
-    # TODO: Query events in the range of [eventid, eventid+10]
+    # TODO: Query most recent events
     db_session.close()
-    return "return index + 10 reported events, the client must send an index to indicate which page they are on"
+    return "return 10 most recent events"
 
-@app.route("/event/<eventid>", methods=["GET"])
+@app.route("/event/<int:eventid>", methods=["GET"])
 @login_required
-def event():
+def event(eventid):
     db_session = get_db_session()
-    # TODO: fetch the event information based on the event id
+
+    event = db_session.query(Event).filter(Event.eventid == eventid).first()
+
+    result = {
+        "eventid": event.eventid,
+        "eventtype": event.eventtype,
+        "userid": event.userid,
+        "responderid": event.responderid,
+        "status": event.status,
+        "shortdescription": event.shortdescription,
+        "city": event.city,
+        "district": event.district,
+        "createdat": str(event.createdat)
+    }
+
     db_session.close()
 
-    return "return event specifics"
+    return json.dumps(result)
 
 @app.route("/logout")
 @login_required

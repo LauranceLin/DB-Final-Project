@@ -18,7 +18,7 @@ Base = declarative_base() # inherit from this class to create ORM models
 
 def get_db_session():
     try:
-        dbsessionmaker = sessionmaker(autocommit=False, bind=engine)
+        dbsessionmaker = sessionmaker(autocommit=False, autoflush=False, bind=engine)
         db_session = dbsessionmaker()
         return db_session
     except:
