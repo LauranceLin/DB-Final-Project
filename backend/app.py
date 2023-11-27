@@ -84,9 +84,7 @@ def check_eventtype(eventtype):
     print(eventtype)
     print(EventType.EVENT_TYPE_LEN.value)
     if eventtype < 0 or eventtype >= EventType.EVENT_TYPE_LEN.value:
-        print("heeee")
         return False
-    print("haaaaa")
     return True
 
 def check_location(city, district):
