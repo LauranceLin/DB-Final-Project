@@ -6,6 +6,7 @@ import bcrypt
 import datetime
 from schema.enums import *
 import json
+from sqlalchemy import exc
 
 app = Flask(__name__)
 app.secret_key = 'NnSELOhwoPri1o-RZR3d1A'
@@ -37,10 +38,12 @@ def register():
     hashed_password = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
     new_user = Users(email=email, password=hashed_password, phonenumber=phonenumber, name=name, status=status)
 
-    db_session.add(new_user)
+    try:
+        db_session.add(new_user)
+        db_session.commit()
+    except exc.SQLAlchemyError:
+        db_session.rollback()
 
-    # commit causes new_user to expire
-    db_session.commit()
     db_session.close()
 
     return "Created new user"
@@ -56,7 +59,9 @@ def login():
     password = request.values['password']
 
     db_session = get_db_session()
+
     user = db_session.query(Users).filter(Users.email == email).first()
+
     db_session.close()
 
     if user and bcrypt.checkpw(password.encode(), user.password.encode()):
@@ -156,39 +161,44 @@ def add_event():
                 return jsonify({"error": "Animal description too long"})
 
         # create event
-        eventtype = EVENT_TYPE[eventtype]
+        try:
+            eventtype = EVENT_TYPE[eventtype]
 
-        district_str = DISTRICTS[city][district]
-        city_str = CITIES[city]
-        animaltype = ANIMAL_TYPE[animaltype]
+            district_str = DISTRICTS[city][district]
+            city_str = CITIES[city]
+            animaltype = ANIMAL_TYPE[animaltype]
 
-        new_event = Event(eventtype=eventtype, \
-            userid=userid, \
-            responderid=responderid, \
-            status=status, \
-            shortdescription=shortdescription, \
-            city=city_str, district=district_str, \
-            shortaddress=shortaddress, \
-            createdat=createdat)
+            new_event = Event(eventtype=eventtype, \
+                userid=userid, \
+                responderid=responderid, \
+                status=status, \
+                shortdescription=shortdescription, \
+                city=city_str, district=district_str, \
+                shortaddress=shortaddress, \
+                createdat=createdat)
 
-        db_session.add(new_event)
-        db_session.flush()
-
-        print(f"Created new event with id: {new_event.eventid}")
-
-        # create animals
-        for animal in eventanimals:
-            new_animaltype = ANIMAL_TYPE[animal['animaltype']]
-            new_animaldescription = animal['animaldescription']
-            new_animal = Animal(eventid=new_event.eventid, \
-                                placementid=None, \
-                                type=new_animaltype, \
-                                description=new_animaldescription)
-            db_session.add(new_animal)
+            db_session.add(new_event)
             db_session.flush()
-            print(f"Created new animal with id: {new_animal.animalid}")
 
-        db_session.commit()
+            print(f"Created new event with id: {new_event.eventid}")
+
+            # create animals
+            for animal in eventanimals:
+                new_animaltype = ANIMAL_TYPE[animal['animaltype']]
+                new_animaldescription = animal['animaldescription']
+                new_animal = Animal(eventid=new_event.eventid, \
+                                    placementid=None, \
+                                    type=new_animaltype, \
+                                    description=new_animaldescription)
+                db_session.add(new_animal)
+                db_session.flush()
+                print(f"Created new animal with id: {new_animal.animalid}")
+
+            db_session.commit()
+
+        except exc.SQLAlchemyError:
+            db_session.rollback()
+
         db_session.close()
 
         # TODO: Send out notifications (preferably in a separate thread)
@@ -225,6 +235,31 @@ def event(eventid):
     db_session.close()
 
     return jsonify(result)
+
+# current users report record
+@app.route('/reportrecord')
+@login_required
+def reportrecord():
+    db_session = get_db_session()
+    reported_events = db_session.query(Event).filter(Event.userid == current_user.userid).all()
+    db_session.close()
+
+    event_list = []
+    for event in reported_events:
+        e = {
+            "eventid": event.eventid,
+            "eventtype": event.eventtype,
+            "userid": event.userid,
+            "responderid": event.responderid,
+            "status": event.status,
+            "shortdescription": event.shortdescription,
+            "city": event.city,
+            "district": event.district,
+            "createdat": str(event.createdat)
+        }
+        event_list.append(e)
+
+    return jsonify(event_list)
 
 @app.route("/logout")
 @login_required
