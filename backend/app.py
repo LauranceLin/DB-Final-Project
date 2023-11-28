@@ -237,11 +237,16 @@ def event(eventid):
     return jsonify(result)
 
 # current users report record
-@app.route('/reportrecord')
+@app.route('/reportrecord/<int:offset>')
 @login_required
-def reportrecord():
+def reportrecord(offset):
     db_session = get_db_session()
-    reported_events = db_session.query(Event).filter(Event.userid == current_user.userid).all()
+
+    reported_events = db_session.query(Event) \
+        .filter(Event.userid == current_user.userid) \
+        .order_by(Event.createdat.desc()) \
+        .offset(offset).limit(10)
+
     db_session.close()
 
     event_list = []
