@@ -205,13 +205,31 @@ def add_event():
 
         return "Created new event and animals"
 
-@app.route("/reported_events", methods=["GET"])
+@app.route("/reported_events/<int:offset>", methods=["GET"])
 @login_required
-def reported_events():
+def reported_events(offset):
     db_session = get_db_session()
     # TODO: Query most recent events
+    results = db_session.query(Event).order_by(Event.createdat.desc()).limit(10)
     db_session.close()
-    return "return 10 most recent events"
+
+    event_list = []
+
+    for event in results:
+        e = {
+            "eventid": event.eventid,
+            "eventtype": event.eventtype,
+            "userid": event.userid,
+            "responderid": event.responderid,
+            "status": event.status,
+            "shortdescription": event.shortdescription,
+            "city": event.city,
+            "district": event.district,
+            "createdat": str(event.createdat)
+        }
+        event_list.append(e)
+
+    return jsonify(event_list)
 
 @app.route("/event/<int:eventid>", methods=["GET"])
 @login_required
