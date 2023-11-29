@@ -15,6 +15,8 @@ login_manager = LoginManager()
 login_manager.login_view = 'login'
 login_manager.init_app(app)
 
+NUM_ITEMS_PER_PAGE = 10
+
 @login_manager.user_loader
 def user_loader(userid):
     db_session = get_db_session()
@@ -208,9 +210,10 @@ def add_event():
 @app.route("/reported_events/<int:offset>", methods=["GET"])
 @login_required
 def reported_events(offset):
+
     db_session = get_db_session()
     # TODO: Query most recent events
-    results = db_session.query(Event).order_by(Event.createdat.desc()).limit(10)
+    results = db_session.query(Event).order_by(Event.createdat.desc()).offset(offset*NUM_ITEMS_PER_PAGE).limit(NUM_ITEMS_PER_PAGE)
     db_session.close()
 
     event_list = []
@@ -263,7 +266,7 @@ def reportrecord(offset):
     reported_events = db_session.query(Event) \
         .filter(Event.userid == current_user.userid) \
         .order_by(Event.createdat.desc()) \
-        .offset(offset).limit(10)
+        .offset(offset*NUM_ITEMS_PER_PAGE).limit(NUM_ITEMS_PER_PAGE)
 
     db_session.close()
 
@@ -283,6 +286,63 @@ def reportrecord(offset):
         event_list.append(e)
 
     return jsonify(event_list)
+
+@app.route("/subscription", methods=["GET", "POST"])
+@login_required
+def subscription():
+    db_session= get_db_session()
+    target_user_id = current_user.userid
+
+    if request.method == "GET":
+        result = db_session.query(Channel) \
+            .join(UserSubscriptionRecord, Channel.channelid == UserSubscriptionRecord.channelid) \
+            .filter(UserSubscriptionRecord.userid == target_user_id).all()
+
+        subscribed_channels = []
+        for c in result:
+            c_info = {
+                "eventanimal": c.eventanimal,
+                "eventtype": c.eventtype,
+                "eventdistrict": c.eventdistrict
+            }
+            subscribed_channels.append(c_info)
+
+        db_session.close()
+        return jsonify(subscribed_channels)
+
+    else:
+        if 'eventdistrict' in request.form:
+            eventdistrict = request.values['eventdistrict']
+        else:
+            eventdistrict = None
+
+        if 'eventtype' in request.form:
+            eventtype = request.values['eventtype']
+        else:
+            eventtype = None
+
+        if 'eventanimal' in request.form:
+            eventanimal = request.values['eventanimal']
+        else:
+            eventanimal = None
+
+        selected_channel = db_session.query(Channel.channelid) \
+            .filter(Channel.eventanimal == eventanimal) \
+            .filter(Channel.eventtype == eventtype) \
+            .filter(Channel.eventdistrict == eventdistrict).first()
+
+        print(f"The selected channel has id={selected_channel.channelid}")
+
+        new_record = UserSubscriptionRecord(userid=current_user.userid, channelid=selected_channel.channelid)
+
+        try:
+            db_session.add(new_record)
+            db_session.commit()
+        except:
+            db_session.rollback()
+        db_session.close()
+
+        return f"added a new subscription record!"
 
 @app.route("/logout")
 @login_required
