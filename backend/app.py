@@ -7,15 +7,64 @@ import datetime
 from schema.enums import *
 import json
 from sqlalchemy import exc
+from celery import Celery
 
 app = Flask(__name__)
 app.secret_key = 'NnSELOhwoPri1o-RZR3d1A'
+app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
+app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
+
+celery = Celery(app.name, broker = app.config['CELERY_BROKER_URL'])
+celery.conf.update(app.config)
 
 login_manager = LoginManager()
 login_manager.login_view = 'login'
 login_manager.init_app(app)
 
 NUM_ITEMS_PER_PAGE = 10
+
+@celery.task
+def create_notifications(notification_info):
+    notificationtype = notification_info["notificationtype"]
+    eventid = notification_info["eventid"]
+    eventtype = notification_info["eventtype"]
+    eventdistrict = notification_info["eventdistrict"]
+    eventanimal = notification_info["eventanimal"]
+
+    db_session = get_db_session();
+    try:
+        note_timestamp = datetime.datetime.now()
+
+        # first select all that match eventtype and eventdistrict
+        subscriber_query = db_session.query(UserSubscriptionRecord.userid) \
+                        .join(Channel, UserSubscriptionRecord.channelid == Channel.channelid) \
+                        .filter((Channel.eventtype == eventtype) | (Channel.eventdistrict == eventdistrict)) \
+                        .distinct()
+
+        # then match all animal types and union the queries
+        for animal in eventanimal:
+            subscriber_query.union(db_session.query(UserSubscriptionRecord) \
+                        .join(Channel, UserSubscriptionRecord.channelid == Channel.channelid) \
+                        .filter(Channel.eventanimal == animal) \
+                        .distinct()).distinct()
+
+        # execute the query andn get resulting userids
+        subscribed_users = subscriber_query.all()
+
+        new_notes = [ UserNotification(NotificationType=notificationtype, \
+                            eventid=eventid, \
+                            eventtype=eventtype, \
+                            eventdistrict=eventdistrict, \
+                            eventanimal=eventanimal, \
+                            notifieduserid=userid, \
+                            notificationtimestamp=note_timestamp) \
+                    for userid in subscribed_users]
+
+        db_session.bulk_save_objects(new_notes)
+        db_session.commit()
+    except:
+        db_session.rollback()
+    db_session.close()
 
 @login_manager.user_loader
 def user_loader(userid):
@@ -162,6 +211,7 @@ def add_event():
             if len(animaldescription) > 100:
                 return jsonify({"error": "Animal description too long"})
 
+        notification_info = {}
         # create event
         try:
             eventtype = EVENT_TYPE[eventtype]
@@ -184,6 +234,11 @@ def add_event():
 
             print(f"Created new event with id: {new_event.eventid}")
 
+            notification_info["notificationtype"] = NotificationType.EVENT.value
+            notification_info["eventid"] = new_event.eventid
+            notification_info["eventdistrict"] = new_event.district
+            notification_info["eventanimals"] = []
+
             # create animals
             for animal in eventanimals:
                 new_animaltype = ANIMAL_TYPE[animal['animaltype']]
@@ -195,6 +250,7 @@ def add_event():
                 db_session.add(new_animal)
                 db_session.flush()
                 print(f"Created new animal with id: {new_animal.animalid}")
+                notification_info['eventanimals'].append(ANIMAL_TYPE[animal['animaltype']])
 
             db_session.commit()
 
@@ -203,7 +259,8 @@ def add_event():
 
         db_session.close()
 
-        # TODO: Send out notifications (preferably in a separate thread)
+        # TODO: Send out notifications with celery app
+        create_notifications(notification_info).delay()
 
         return "Created new event and animals"
 
