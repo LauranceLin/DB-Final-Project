@@ -6,13 +6,13 @@ import bcrypt
 import datetime
 from schema.enums import *
 import json
-from sqlalchemy import exc
+from sqlalchemy import exc, select
 from celery import Celery
 
 app = Flask(__name__)
 app.secret_key = 'NnSELOhwoPri1o-RZR3d1A'
-app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
-app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
+app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379'
+app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379'
 
 celery = Celery(app.name, broker = app.config['CELERY_BROKER_URL'])
 celery.conf.update(app.config)
@@ -25,44 +25,49 @@ NUM_ITEMS_PER_PAGE = 10
 
 @celery.task
 def create_notifications(notification_info):
+    print("enter create notifications function")
     notificationtype = notification_info["notificationtype"]
     eventid = notification_info["eventid"]
     eventtype = notification_info["eventtype"]
     eventdistrict = notification_info["eventdistrict"]
-    eventanimal = notification_info["eventanimal"]
+    eventanimal = notification_info["eventanimals"]
 
     db_session = get_db_session();
     try:
         note_timestamp = datetime.datetime.now()
 
         # first select all that match eventtype and eventdistrict
-        subscriber_query = db_session.query(UserSubscriptionRecord.userid) \
+        subscriber_query = select(UserSubscriptionRecord.userid) \
                         .join(Channel, UserSubscriptionRecord.channelid == Channel.channelid) \
                         .filter((Channel.eventtype == eventtype) | (Channel.eventdistrict == eventdistrict)) \
                         .distinct()
-
+        print("created first query")
         # then match all animal types and union the queries
         for animal in eventanimal:
-            subscriber_query.union(db_session.query(UserSubscriptionRecord) \
+            new_animal_query = select(UserSubscriptionRecord.userid) \
                         .join(Channel, UserSubscriptionRecord.channelid == Channel.channelid) \
                         .filter(Channel.eventanimal == animal) \
-                        .distinct()).distinct()
+                        .distinct()
+
+            # union select only distinct values
+            subscriber_query.union(new_animal_query)
 
         # execute the query andn get resulting userids
-        subscribed_users = subscriber_query.all()
+        subscribed_users = db_session.execute(subscriber_query).all()
 
-        new_notes = [ UserNotification(NotificationType=notificationtype, \
+        new_notes = [ UserNotification( \
+                            notificationtype=notificationtype, \
                             eventid=eventid, \
-                            eventtype=eventtype, \
-                            eventdistrict=eventdistrict, \
-                            eventanimal=eventanimal, \
-                            notifieduserid=userid, \
+                            notifieduserid=user[0], \
                             notificationtimestamp=note_timestamp) \
-                    for userid in subscribed_users]
+                    for user in subscribed_users]
 
         db_session.bulk_save_objects(new_notes)
         db_session.commit()
-    except:
+        print("Successfully Created All Notifications")
+
+    except exc.SQLAlchemyError as e:
+        print("Rollback, due to error: ", e._message)
         db_session.rollback()
     db_session.close()
 
@@ -257,6 +262,7 @@ def add_event():
             notification_info["notificationtype"] = NotificationType.EVENT.value
             notification_info["eventid"] = new_event.eventid
             notification_info["eventdistrict"] = new_event.district
+            notification_info["eventtype"] = new_event.eventtype
             notification_info["eventanimals"] = []
 
             # create animals
@@ -275,12 +281,15 @@ def add_event():
             db_session.commit()
 
         except exc.SQLAlchemyError:
+            print(exc.SQLAlchemyError)
             db_session.rollback()
 
         db_session.close()
 
         # TODO: Send out notifications with celery app
-        create_notifications(notification_info).delay()
+
+        create_notifications.delay(notification_info)
+        # create_notifications(notification_info)
 
         return "Created new event and animals"
 
