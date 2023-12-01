@@ -123,17 +123,37 @@ def login():
         print("Login failed")
         return redirect(url_for("login"))
 
-@app.route("/notifications", methods=["GET"])
+@app.route("/notifications/<int:offset>", methods=["GET"])
 @login_required
-def notifications():
-    user = current_user
-    print(str(user.userid))
+def notifications(offset):
 
     db_session = get_db_session()
-    # TODO: get notification history based on user id
+
+    # get recent history notifications determined by offset
+    notified_events = db_session.query(Event) \
+        .join(UserNotification, UserNotification.eventid == Event.eventid) \
+        .filter(UserNotification.notifieduserid == current_user.userid) \
+        .order_by(UserNotification.notificationtimestamp.desc()) \
+        .offset(NUM_ITEMS_PER_PAGE*offset).limit(NUM_ITEMS_PER_PAGE).all()
+
+    event_list = []
+    for event in notified_events:
+        e = {
+            "eventid": event.eventid,
+            "eventtype": event.eventtype,
+            "userid": event.userid,
+            "responderid": event.responderid,
+            "status": event.status,
+            "shortdescription": event.shortdescription,
+            "city": event.city,
+            "district": event.district,
+            "createdat": str(event.createdat)
+        }
+        event_list.append(e)
+
     db_session.close()
 
-    return "Retrieved notifications!"
+    return jsonify(event_list)
 
 # error checking functions
 def check_eventtype(eventtype):
