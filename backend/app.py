@@ -26,6 +26,7 @@ NUM_ITEMS_PER_PAGE = 10
 @celery.task
 def create_notifications(notification_info):
     print("enter create notifications function")
+    print(notification_info)
     notificationtype = notification_info["notificationtype"]
     eventid = notification_info["eventid"]
     eventtype = notification_info["eventtype"]
@@ -259,7 +260,7 @@ def add_event():
 
             print(f"Created new event with id: {new_event.eventid}")
 
-            notification_info["notificationtype"] = NotificationType.EVENT.value
+            notification_info["notificationtype"] = NOTIFICATION_TYPE[NotificationType.EVENT.value]
             notification_info["eventid"] = new_event.eventid
             notification_info["eventdistrict"] = new_event.district
             notification_info["eventtype"] = new_event.eventtype
