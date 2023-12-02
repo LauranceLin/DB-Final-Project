@@ -89,16 +89,17 @@ def register():
     password = request.values['password']
     name = request.values['name']
     phonenumber = request.values['phonenumber']
-    status = UsersStatus.ACTIVE.value
+    status = USERS_STATUS[UsersStatus.ACTIVE.value]
     db_session = get_db_session()
 
     hashed_password = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
     new_user = Users(email=email, password=hashed_password, phonenumber=phonenumber, name=name, status=status)
-
+    print(new_user)
     try:
         db_session.add(new_user)
         db_session.commit()
-    except exc.SQLAlchemyError:
+    except exc.SQLAlchemyError as e:
+        print("Rollback, due to error: ", e._message)
         db_session.rollback()
 
     db_session.close()
