@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, url_for, jsonify, session
+from flask import Flask, request, redirect, url_for, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from schema.database import get_db_session
 from schema.models import *
@@ -79,99 +79,32 @@ def user_loader(userid):
     db_session.close()
     return user
 
-def is_user():
-    if session['role'] == 'user':
-        return True
-    return False
-
-def is_responder():
-    if session['role'] == 'responder':
-        return True
-    return False
-
-def is_admin():
-    if session['role'] == 'admin':
-        return True
-    return False
-
 @app.route("/")
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "GET":
         return "Return register page"
 
-    if is_user():
-        email = request.values['email']
-        password = request.values['password']
-        name = request.values['name']
-        phonenumber = request.values['phonenumber']
-        status = USERS_STATUS[UsersStatus.ACTIVE.value]
+    email = request.values['email']
+    password = request.values['password']
+    name = request.values['name']
+    phonenumber = request.values['phonenumber']
+    status = USERS_STATUS[UsersStatus.ACTIVE.value]
+    db_session = get_db_session()
 
-        db_session = get_db_session()
+    hashed_password = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+    new_user = Users(email=email, password=hashed_password, phonenumber=phonenumber, name=name, status=status)
+    print(new_user)
+    try:
+        db_session.add(new_user)
+        db_session.commit()
+    except exc.SQLAlchemyError as e:
+        print("Rollback, due to error: ", e._message)
+        db_session.rollback()
 
-        hashed_password = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+    db_session.close()
 
-        new_user = Users(email=email, \
-                        password=hashed_password, \
-                        phonenumber=phonenumber, \
-                        name=name, \
-                        status=status)
-
-        try:
-            db_session.add(new_user)
-            db_session.commit()
-        except exc.SQLAlchemyError as e:
-            print("Rollback, due to error: ", e._message)
-            db_session.rollback()
-        db_session.close()
-        return "Created new user"
-
-    elif is_responder():
-        email = request.values['email']
-        password = request.values['password']
-        name = request.values['name']
-        phonenumber = request.values['phonenumber']
-        respondertype = request.values['respondertype']
-        address = request.values['address']
-
-        db_session = get_db_session()
-
-        hashed_password = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
-
-        new_responder = Responder(email=email, \
-                                password=hashed_password, \
-                                phonenumber=phonenumber, \
-                                name=name, \
-                                respondertype=respondertype, \
-                                address=address)
-        try:
-            db_session.add(new_responder)
-            db_session.commit()
-        except exc.SQLAlchemyError as e:
-            print("Rollback, due to error: ", e._message)
-            db_session.rollback()
-        db_session.close()
-        return "Created new responder"
-
-    elif is_admin():
-        email = request.values['email']
-        password = request.values['password']
-
-        hashed_password = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
-
-        new_admin = Admin(email=email, password=hashed_password)
-
-        try:
-            db_session.add(new_admin)
-            db_session.commit()
-        except exc.SQLAlchemyError as e:
-            print("Rollback, due to error: ", e._message)
-            db_session.rollback()
-        db_session.close()
-        return "Created new admin"
-    else:
-        return jsonify({"error": "register error"})
-
+    return "Created new user"
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -180,58 +113,22 @@ def login():
         return "Login page!"
 
     # POST
-    if is_user():
-        email = request.values['email']
-        password = request.values['password']
+    email = request.values['email']
+    password = request.values['password']
 
-        db_session = get_db_session()
+    db_session = get_db_session()
 
-        user = db_session.query(Users).filter(Users.email == email).first()
+    user = db_session.query(Users).filter(Users.email == email).first()
 
-        db_session.close()
+    db_session.close()
 
-        if user and bcrypt.checkpw(password.encode(), user.password.encode()):
-            login_user(user)
-            print("User logged in!")
-            return redirect(url_for("notifications"))
-        else:
-            print("Login failed")
-            return redirect(url_for("login"))
-    elif is_responder():
-        email = request.values['email']
-        password = request.values['password']
-
-        db_session = get_db_session()
-
-        responder = db_session.query(Responder).filter(Responder.email == email).first()
-
-        db_session.close()
-
-        if responder and bcrypt.checkpw(password.encode(), user.password.encode()):
-            login_user(responder)
-            print("Responder logged in!")
-            return redirect(url_for("notifications"))
-        else:
-            print("Login failed")
-            return redirect(url_for("login"))
-
-    elif is_admin():
-        email = request.values['email']
-        password = request.values['password']
-
-        db_session = get_db_session()
-
-        admin = db_session.query(Admin).filter(Admin.email == email).first()
-
-        db_session.close()
-
-        if admin and bcrypt.checkpw(password.encode(), user.password.encode()):
-            login_user(admin)
-            print("Admin logged in!")
-            return redirect(url_for("notifications"))
-        else:
-            print("Login failed")
-            return redirect(url_for("login"))
+    if user and bcrypt.checkpw(password.encode(), user.password.encode()):
+        login_user(user)
+        print("User logged in!")
+        return redirect(url_for("notifications"))
+    else:
+        print("Login failed")
+        return redirect(url_for("login"))
 
 @app.route("/notifications/<int:offset>", methods=["GET"])
 @login_required
@@ -242,7 +139,7 @@ def notifications(offset):
     # get recent history notifications determined by offset
     notified_events = db_session.query(Event) \
         .join(UserNotification, UserNotification.eventid == Event.eventid) \
-        .filter(UserNotification.notifieduserid == current_user.id) \
+        .filter(UserNotification.notifieduserid == current_user.userid) \
         .order_by(UserNotification.notificationtimestamp.desc()) \
         .offset(NUM_ITEMS_PER_PAGE*offset).limit(NUM_ITEMS_PER_PAGE).all()
 
@@ -293,7 +190,7 @@ def add_event():
     else:
         db_session = get_db_session()
 
-        userid = current_user.id
+        userid = current_user.userid
         responderid = None
         status = EVENT_STATUS[EventStatus.UNRESOLVED.value]
 

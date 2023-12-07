@@ -9,7 +9,7 @@ from schema.enums import USERS_STATUS, UsersStatus
 class Users(Base, UserMixin):
     __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column('userid', primary_key=True)
+    userid: Mapped[int] = mapped_column('userid', primary_key=True)
     password: Mapped[str] = mapped_column('password', CHAR(60))
     name: Mapped[str] = mapped_column('name', VARCHAR(20))
     email: Mapped[str] = mapped_column('email', VARCHAR(30))
@@ -28,20 +28,19 @@ class Users(Base, UserMixin):
     def get_id(self):
         return str(self.userid)
 
-class Admin(Base, UserMixin):
+class Admin(Base):
     __tablename__ = "admin"
 
-    id: Mapped[int] = mapped_column('adminid', primary_key=True)
-    email: Mapped[str] = mapped_column('email', VARCHAR(30))
-    password: Mapped[str] = mapped_column('password', CHAR(60))
+    adminid: Mapped[int] = mapped_column('adminid', primary_key=True)
+    password: Mapped[str] = mapped_column('password')
 
     def __str__(self):
         return f"Admin: adminid={self.adminid}, password={self.password}"
 
-class Responder(Base, UserMixin):
+class Responder(Base):
     __tablename__ = "responder"
 
-    id: Mapped[int] = mapped_column("responderid", primary_key=True)
+    responderid: Mapped[int] = mapped_column("responderid", primary_key=True)
     name: Mapped[str] = mapped_column("respondername", unique=True)
     password: Mapped[str] = mapped_column("password", CHAR(60))
     email: Mapped[str] = mapped_column("email", VARCHAR(30))
