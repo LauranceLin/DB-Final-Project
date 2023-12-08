@@ -169,20 +169,37 @@ def get_userinfo():
             "type": responderinfo.type,
             "address": responderinfo.address
         }
+        return jsonify(info)
     else: # admin
         return jsonify({"userid": current_user.userid, "email": current_user.email})
 
 @app.route("/notifications/<int:offset>", methods=["GET"])
 @login_required
 def notifications(offset):
-    db_session = get_db_session()
+    # TODO: Test the url parameter notificationtype
 
-    # get recent history notifications determined by offset
-    notified_events = db_session.query(Event) \
-        .join(Notification, Notification.eventid == Event.eventid) \
-        .filter(Notification.notifieduserid == current_user.userid) \
-        .order_by(Notification.notificationtimestamp.desc()) \
-        .offset(NUM_ITEMS_PER_PAGE*offset).limit(NUM_ITEMS_PER_PAGE).all()
+    if 'notificationtype' in request.args:
+        notification_type = request.args.get('notificationtype')
+
+        if not check_notificationtype(notification_type):
+            return jsonify({"Error": "No such notificationtype"})
+
+        db_session = get_db_session()
+        notified_events = db_session.query(Event) \
+            .join(Notification, Notification.eventid == Event.eventid) \
+            .filter(Notification.notifieduserid == current_user.userid) \
+            .filter(Notification.notificationtype == NOTIFICATION_TYPE[notification_type]) \
+            .order_by(Notification.notificationtimestamp.desc()) \
+            .offset(NUM_ITEMS_PER_PAGE*offset).limit(NUM_ITEMS_PER_PAGE).all()
+    else:
+        db_session = get_db_session()
+        # get recent history notifications determined by offset
+        notified_events = db_session.query(Event) \
+            .join(Notification, Notification.eventid == Event.eventid) \
+            .filter(Notification.notifieduserid == current_user.userid) \
+            .filter(Notification.notificationtype == NOTIFICATION_TYPE[notification_type]) \
+            .order_by(Notification.notificationtimestamp.desc()) \
+            .offset(NUM_ITEMS_PER_PAGE*offset).limit(NUM_ITEMS_PER_PAGE).all()
 
     event_list = []
 
@@ -208,39 +225,6 @@ def notifications(offset):
     db_session.close()
 
     return jsonify(event_list)
-
-def check_resulttype(type: int):
-    if type < 0 or type >= ResultType.RESULT_TYPE_LEN.value:
-        return False
-    return True
-
-def check_notificationtype(type: int):
-    if type < 0 or type >= NotificationType.NOTIFICATION_TYPE_LEN.value:
-        return False
-    return True
-
-def check_eventstatus(status: int):
-    if status < 0 or status >= EventStatus.EVENT_STATUS_LEN.value:
-        return False
-    return True
-
-# error checking functions
-def check_eventtype(eventtype: int):
-    if eventtype < 0 or eventtype >= EventType.EVENT_TYPE_LEN.value:
-        return False
-    return True
-
-def check_location(city: int, district: int):
-    if city < 0 or city >= City.CITY_LEN.value:
-        return False
-    if district < 0 or district >= len(DISTRICTS[city]):
-        return False
-    return True
-
-def check_animaltype(animaltype: int):
-    if animaltype < 0 or animaltype >= AnimalType.ANIMAL_TYPE_LEN.value:
-        return False
-    return True
 
 @app.route("/addevent", methods=["GET", "POST"])
 @login_required
@@ -427,6 +411,7 @@ def event(eventid):
         return jsonify(result)
 
     # POST
+    # TODO: Test the responder editing functions
     if is_responder():
         # event info updates
         eventid = request.values["eventid"]
@@ -538,6 +523,7 @@ def subscription(offset):
         db_session.close()
         return jsonify(subscribed_channels)
 
+    # TODO: Test the delete functionality
     # POST (delete subscription)
     if "delete" in request.form:
         channelid = request.values["channelid"]
@@ -590,6 +576,7 @@ def logout():
     logout_user()
     return "logout successful"
 
+# TODO: Test endpoint
 # create warnings and reports
 @app.route("/event_results/<int:eventid>", methods=["GET", "POST"])
 @login_required
@@ -664,6 +651,14 @@ def event_results(eventid):
         create_notifications(notification_info)
 
         return "Created warning!"
+
+@app.route("/respond_record/<int:offset>", methods=["GET"])
+def respond_record(offset):
+    # only responder should be able to access this endpoint
+    if not is_responder():
+        return redirect(url_for("login"))
+
+    # TODO: fetch all the events the responder responded to
 
 if __name__ == '__main__':
     app.run()
