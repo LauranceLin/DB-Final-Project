@@ -1,5 +1,7 @@
 import enum
 
+ROLE = ["User", "Responder", "Admin"]
+
 class UsersStatus(enum.Enum):
     ACTIVE = 0
     BANNED = 1

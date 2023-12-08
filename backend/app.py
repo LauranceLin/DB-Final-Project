@@ -23,6 +23,16 @@ login_manager.init_app(app)
 
 NUM_ITEMS_PER_PAGE = 10
 
+# check role
+def is_user():
+    return current_user.role == ROLE[0]
+
+def is_admin():
+    return current_user.role == ROLE[1]
+
+def is_responder():
+    return current_user.role == ROLE[2]
+
 @celery.task
 def create_notifications(notification_info):
     print("enter create notifications function")
@@ -38,15 +48,15 @@ def create_notifications(notification_info):
         note_timestamp = datetime.datetime.now()
 
         # first select all that match eventtype and eventdistrict
-        subscriber_query = select(UserSubscriptionRecord.userid) \
-                        .join(Channel, UserSubscriptionRecord.channelid == Channel.channelid) \
+        subscriber_query = select(SubscriptionRecord.userid) \
+                        .join(Channel, SubscriptionRecord.channelid == Channel.channelid) \
                         .filter((Channel.eventtype == eventtype) | (Channel.eventdistrict == eventdistrict)) \
                         .distinct()
         print("created first query")
         # then match all animal types and union the queries
         for animal in eventanimal:
-            new_animal_query = select(UserSubscriptionRecord.userid) \
-                        .join(Channel, UserSubscriptionRecord.channelid == Channel.channelid) \
+            new_animal_query = select(SubscriptionRecord.userid) \
+                        .join(Channel, SubscriptionRecord.channelid == Channel.channelid) \
                         .filter(Channel.eventanimal == animal) \
                         .distinct()
 
@@ -56,7 +66,7 @@ def create_notifications(notification_info):
         # execute the query andn get resulting userids
         subscribed_users = db_session.execute(subscriber_query).all()
 
-        new_notes = [ UserNotification( \
+        new_notes = [ Notification( \
                             notificationtype=notificationtype, \
                             eventid=eventid, \
                             notifieduserid=user[0], \
@@ -93,10 +103,18 @@ def register():
     db_session = get_db_session()
 
     hashed_password = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
-    new_user = Users(email=email, password=hashed_password, phonenumber=phonenumber, name=name, status=status)
+
     print(new_user)
     try:
+        new_user = Users(email=email, password=hashed_password, role=ROLE[0])
+
         db_session.add(new_user)
+        db_session.flush()
+        print(f"Created new user with userid={new_user.userid}")
+
+        new_userinfo = UserInfo(userid=new_user.userid, phonenumber=phonenumber, name=name, status=status)
+
+        db_session.add(new_userinfo)
         db_session.commit()
     except exc.SQLAlchemyError as e:
         print("Rollback, due to error: ", e._message)
@@ -133,14 +151,13 @@ def login():
 @app.route("/notifications/<int:offset>", methods=["GET"])
 @login_required
 def notifications(offset):
-
     db_session = get_db_session()
 
     # get recent history notifications determined by offset
     notified_events = db_session.query(Event) \
-        .join(UserNotification, UserNotification.eventid == Event.eventid) \
-        .filter(UserNotification.notifieduserid == current_user.userid) \
-        .order_by(UserNotification.notificationtimestamp.desc()) \
+        .join(Notification, Notification.eventid == Event.eventid) \
+        .filter(Notification.notifieduserid == current_user.userid) \
+        .order_by(Notification.notificationtimestamp.desc()) \
         .offset(NUM_ITEMS_PER_PAGE*offset).limit(NUM_ITEMS_PER_PAGE).all()
 
     event_list = []
@@ -327,13 +344,19 @@ def reported_events(offset):
 def event(eventid):
     db_session = get_db_session()
 
-    event = db_session.query(Event).filter(Event.eventid == eventid).first()
+    query_event = select(Event, ResponderInfo.name.label("responder_name")) \
+            .outerjoin(ResponderInfo, ResponderInfo.responderid == Event.responderid) \
+            .filter(Event.eventid == eventid).first()
+
+    event = db_session.execute(query_event)
+    # test if outerjoin works (includes all events that have responder = Null values)
 
     result = {
         "eventid": event.eventid,
         "eventtype": event.eventtype,
         "userid": event.userid,
         "responderid": event.responderid,
+        "respondername": event.responder_name,
         "status": event.status,
         "shortdescription": event.shortdescription,
         "city": event.city,
@@ -375,20 +398,21 @@ def reportrecord(offset):
 
     return jsonify(event_list)
 
-@app.route("/subscription", methods=["GET", "POST"])
+@app.route("/subscription/<int:offset>", methods=["GET", "POST"])
 @login_required
-def subscription():
+def subscription(offset):
     db_session= get_db_session()
-    target_user_id = current_user.userid
 
     if request.method == "GET":
         result = db_session.query(Channel) \
-            .join(UserSubscriptionRecord, Channel.channelid == UserSubscriptionRecord.channelid) \
-            .filter(UserSubscriptionRecord.userid == target_user_id).all()
+            .join(SubscriptionRecord, Channel.channelid == SubscriptionRecord.channelid) \
+            .filter(SubscriptionRecord.userid == current_user.userid) \
+            .offset(NUM_ITEMS_PER_PAGE*offset).limit(NUM_ITEMS_PER_PAGE).all()
 
         subscribed_channels = []
         for c in result:
             c_info = {
+                "channel_id": c.channelid,
                 "eventanimal": c.eventanimal,
                 "eventtype": c.eventtype,
                 "eventdistrict": c.eventdistrict
@@ -398,39 +422,51 @@ def subscription():
         db_session.close()
         return jsonify(subscribed_channels)
 
+    # POST (delete subscription)
+    if "delete" in request.form:
+        channelid = request.values["channelid"]
+
+        # delete subscription
+        db_session.query(SubscriptionRecord) \
+            .filter(SubscriptionRecord.channelid == channelid) \
+            .filter(SubscriptionRecord.userid == current_user.userid) \
+            .delete()
+
+        return redirect(f"/subscription/{offset}")
+
+    # POST (add subscription)
+    if 'eventdistrict' in request.form:
+        eventdistrict = request.values['eventdistrict']
     else:
-        if 'eventdistrict' in request.form:
-            eventdistrict = request.values['eventdistrict']
-        else:
-            eventdistrict = None
+        eventdistrict = None
 
-        if 'eventtype' in request.form:
-            eventtype = request.values['eventtype']
-        else:
-            eventtype = None
+    if 'eventtype' in request.form:
+        eventtype = request.values['eventtype']
+    else:
+        eventtype = None
 
-        if 'eventanimal' in request.form:
-            eventanimal = request.values['eventanimal']
-        else:
-            eventanimal = None
+    if 'eventanimal' in request.form:
+        eventanimal = request.values['eventanimal']
+    else:
+        eventanimal = None
 
-        selected_channel = db_session.query(Channel.channelid) \
-            .filter(Channel.eventanimal == eventanimal) \
-            .filter(Channel.eventtype == eventtype) \
-            .filter(Channel.eventdistrict == eventdistrict).first()
+    selected_channel = db_session.query(Channel.channelid) \
+        .filter(Channel.eventanimal == eventanimal) \
+        .filter(Channel.eventtype == eventtype) \
+        .filter(Channel.eventdistrict == eventdistrict).first()
 
-        print(f"The selected channel has id={selected_channel.channelid}")
+    print(f"The selected channel has id={selected_channel.channelid}")
 
-        new_record = UserSubscriptionRecord(userid=current_user.userid, channelid=selected_channel.channelid)
+    new_record = SubscriptionRecord(userid=current_user.userid, channelid=selected_channel.channelid)
 
-        try:
-            db_session.add(new_record)
-            db_session.commit()
-        except:
-            db_session.rollback()
-        db_session.close()
+    try:
+        db_session.add(new_record)
+        db_session.commit()
+    except:
+        db_session.rollback()
+    db_session.close()
 
-        return f"added a new subscription record!"
+    return f"added a new subscription record!"
 
 @app.route("/logout")
 @login_required
