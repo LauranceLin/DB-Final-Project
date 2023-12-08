@@ -186,7 +186,12 @@ def notifications(offset):
         .offset(NUM_ITEMS_PER_PAGE*offset).limit(NUM_ITEMS_PER_PAGE).all()
 
     event_list = []
+
     for event in notified_events:
+        animals = db_session.query(Animal).filter(Animal.eventid == event.eventid).all()
+
+        animallist = [animal.__dict__ for animal in animals]
+
         e = {
             "eventid": event.eventid,
             "eventtype": event.eventtype,
@@ -196,7 +201,8 @@ def notifications(offset):
             "shortdescription": event.shortdescription,
             "city": event.city,
             "district": event.district,
-            "createdat": str(event.createdat)
+            "createdat": str(event.createdat),
+            "animals": animallist
         }
         event_list.append(e)
 
@@ -245,7 +251,12 @@ def add_event():
         district = request.values['district']
         shortaddress = request.values['shortaddress']
         createdat = datetime.datetime.now()
-        eventanimals = request.values['eventanimals']
+
+        # error checking for animal
+        try:
+            eventanimals = request.form.getlist('eventanimals')
+        except:
+            jsonify({"error": "eventanimals should be a list of dictionaries"})
 
         # error checking for event
         if len(shortaddress) > 30:
@@ -269,12 +280,6 @@ def add_event():
         except:
             return jsonify({"error": "Location doesn't exist"})
 
-        # error checking for animal
-        try:
-            eventanimals = json.loads(eventanimals)
-        except:
-            jsonify({"error": "eventanimals should be a list of dictionaries"})
-
         for animal in eventanimals:
             animaltype = animal['animaltype']
             animaldescription = animal['animaldescription']
@@ -290,7 +295,6 @@ def add_event():
 
             district_str = DISTRICTS[city][district]
             city_str = CITIES[city]
-            animaltype = ANIMAL_TYPE[animaltype]
 
             new_event = Event(eventtype=eventtype, \
                 userid=userid, \
