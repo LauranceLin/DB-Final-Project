@@ -73,6 +73,15 @@ EVENT_STATUS = [
     "Unresolved", "Resolved", "Ongoing", "FalseAlarm", "Failed"
 ]
 
+class ResultType(enum.Enum):
+    REPORT = 0
+    WARNING = 1
+    RESULT_TYPE_LEN = 2
+
+RESULT_TYPE = [
+    "Report", "Warning"
+]
+
 class City(enum.Enum):
     TAIPEI = 0
     NEW_TAIPEI = 1
@@ -129,3 +138,44 @@ DISTRICTS = [
         'Wulai'         # 28
     ]
 ]
+
+WARNING_LEVEL_MAX = 10
+WARNING_LEVEL_MIN = 0
+
+def check_warninglevel(level: int):
+    if level < WARNING_LEVEL_MIN or level > WARNING_LEVEL_MAX:
+        return False
+    return True
+
+def check_resulttype(type: int):
+    if type < 0 or type >= ResultType.RESULT_TYPE_LEN.value:
+        return False
+    return True
+
+def check_notificationtype(type: int):
+    if type < 0 or type >= NotificationType.NOTIFICATION_TYPE_LEN.value:
+        return False
+    return True
+
+def check_eventstatus(status: int):
+    if status < 0 or status >= EventStatus.EVENT_STATUS_LEN.value:
+        return False
+    return True
+
+# error checking functions
+def check_eventtype(eventtype: int):
+    if eventtype < 0 or eventtype >= EventType.EVENT_TYPE_LEN.value:
+        return False
+    return True
+
+def check_location(city: int, district: int):
+    if city < 0 or city >= City.CITY_LEN.value:
+        return False
+    if district < 0 or district >= len(DISTRICTS[city]):
+        return False
+    return True
+
+def check_animaltype(animaltype: int):
+    if animaltype < 0 or animaltype >= AnimalType.ANIMAL_TYPE_LEN.value:
+        return False
+    return True

@@ -5,7 +5,6 @@ from schema.models import *
 import bcrypt
 import datetime
 from schema.enums import *
-import json
 from sqlalchemy import exc, select
 from celery import Celery
 
@@ -143,7 +142,7 @@ def login():
     if user and bcrypt.checkpw(password.encode(), user.password.encode()):
         login_user(user)
         print("User logged in!")
-        return redirect(url_for("notifications"))
+        return redirect(url_for("notifications/0"))
     else:
         print("Login failed")
         return redirect(url_for("login"))
@@ -209,6 +208,16 @@ def notifications(offset):
     db_session.close()
 
     return jsonify(event_list)
+
+def check_resulttype(type: int):
+    if type < 0 or type >= ResultType.RESULT_TYPE_LEN.value:
+        return False
+    return True
+
+def check_notificationtype(type: int):
+    if type < 0 or type >= NotificationType.NOTIFICATION_TYPE_LEN.value:
+        return False
+    return True
 
 def check_eventstatus(status: int):
     if status < 0 or status >= EventStatus.EVENT_STATUS_LEN.value:
@@ -539,7 +548,7 @@ def subscription(offset):
             .filter(SubscriptionRecord.userid == current_user.userid) \
             .delete()
 
-        return redirect(f"/subscription/{offset}")
+        return redirect(url_for(f"/subscription/{offset}"))
 
     # POST (add subscription)
     if 'eventdistrict' in request.form:
@@ -580,6 +589,81 @@ def subscription(offset):
 def logout():
     logout_user()
     return "logout successful"
+
+# create warnings and reports
+@app.route("/event_results/<int:eventid>", methods=["GET", "POST"])
+@login_required
+def event_results(eventid):
+
+    # only responders can access this page
+    if not is_responder():
+        redirect(url_for(f"/event/{eventid}"))
+
+    if request.method == "GET":
+        return "return the event result page"
+
+    result_type = request.values["result_type"]
+
+    if not check_resulttype(result_type):
+        return jsonify({"error": "no such notification type"})
+
+
+    if result_type == NotificationType.EVENT.value:
+        # create new report
+        shortdescription = request.values["shortdescription"]
+        createdat = datetime.datetime.now()
+        new_report = Report(eventid=eventid, \
+                            responderid=current_user.userid, \
+                            shortdescription=shortdescription, \
+                            createdat=createdat)
+        try:
+            db_session = get_db_session()
+            db_session.add(new_report)
+            db_session.commit()
+        except exc.SQLAlchemyError as e:
+            print("Error: ", e._message)
+
+        return "Created report!"
+
+    else:
+        # create new warning
+        warninglevel = request.values["warninglevel"]
+        if not check_warninglevel(warninglevel):
+            return jsonify({"Error": "Warning level out of bounds"})
+
+        shortdescription = request.values["shortdescription"]
+        createdat = datetime.datetime.now()
+        notification_info = {}
+
+        try:
+            db_session = get_db_session()
+
+            new_warning = Warning(eventid=eventid, \
+                                    responderid=current_user.userid, \
+                                    shortdescription=shortdescription, \
+                                    warninglevel=warninglevel, \
+                                    createdat=createdat)
+
+            # populate nofication_info values
+            notification_info["notificationtype"] = NOTIFICATION_TYPE[NotificationType.WARNING.value]
+            notification_info["eventid"] = eventid
+
+            event = db_session.query(Event).filter(Event.eventid == eventid).first()
+
+            notification_info["eventtype"] = event.eventtype
+            notification_info["eventdistrict"] = event.district
+
+            notification_info["eventanimals"] = db_session.query(Animal.type).filter(Animal.eventid == eventid).distinct().all()
+
+            db_session.add(new_warning)
+            db_session.commit()
+        except exc.SQLAlchemyError as e:
+            print("Error: ", e._message)
+
+        # TODO: create notifications
+        create_notifications(notification_info)
+
+        return "Created warning!"
 
 if __name__ == '__main__':
     app.run()
