@@ -67,6 +67,7 @@ class EventStatus(enum.Enum):
     ONGOING = 2
     FALSE_ALARM = 3
     FAILED = 4
+    EVENT_STATUS_LEN = 5
 
 EVENT_STATUS = [
     "Unresolved", "Resolved", "Ongoing", "FalseAlarm", "Failed"
@@ -83,9 +84,48 @@ CITIES = [
 
 DISTRICTS = [
     [
-        'Songshan', 'Xinyi', 'Daan', 'Zhongshan', 'Zhongzheng', 'Datong', 'Wanhua', 'Wenshan', 'Nangang', 'Neihu', 'Shilin', 'Beitou'
+        'Songshan',     # 0
+        'Xinyi',        # 1
+        'Daan',         # 2
+        'Zhongshan',    # 3
+        'Zhongzheng',   # 4
+        'Datong',       # 5
+        'Wanhua',       # 6
+        'Wenshan',      # 7
+        'Nangang',      # 8
+        'Neihu',        # 9
+        'Shilin',       # 10
+        'Beitou'        # 11
     ],
     [
-        'Banqiao', 'Sanchong', 'Zhonghe', 'Yonghe', 'Xinzhuang', 'Xindian', 'Tucheng', 'Luzhou', 'Shulin', 'Xizhi', 'Yingge', 'Sanxia', 'Danshui', 'Ruifang', 'Wugu', 'Taishan', 'Linkou', 'Shenkeng', 'Shiding', 'Pinglin', 'Sanzhi', 'Shimen', 'Bali', 'Pingxi', 'Shuangxi', 'Gongliao', 'Jinshan', 'Wanli', 'Wulai'
+        'Banqiao',      # 0
+        'Sanchong',     # 1
+        'Zhonghe',      # 2
+        'Yonghe',       # 3
+        'Xinzhuang',    # 4
+        'Xindian',      # 5
+        'Tucheng',      # 6
+        'Luzhou',       # 7
+        'Shulin',       # 8
+        'Xizhi',        # 9
+        'Yingge',       # 10
+        'Sanxia',       # 11
+        'Danshui',      # 12
+        'Ruifang',      # 13
+        'Wugu',         # 14
+        'Taishan',      # 15
+        'Linkou',       # 16
+        'Shenkeng',     # 17
+        'Shiding',      # 18
+        'Pinglin',      # 19
+        'Sanzhi',       # 20
+        'Shimen',       # 21
+        'Bali',         # 22
+        'Pingxi',       # 23
+        'Shuangxi',     # 24
+        'Gongliao',     # 25
+        'Jinshan',      # 26
+        'Wanli',        # 27
+        'Wulai'         # 28
     ]
 ]

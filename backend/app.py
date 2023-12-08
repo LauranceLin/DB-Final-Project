@@ -148,6 +148,31 @@ def login():
         print("Login failed")
         return redirect(url_for("login"))
 
+@app.route("/userinfo", method=["GET"])
+def get_userinfo():
+    db_session = get_db_session()
+    if is_user():
+        userinfo = db_session.query(UserInfo).filter(UserInfo.userid == current_user.userid)
+        info = {
+            "userid": current_user.userid,
+            "email": current_user.email,
+            "name": userinfo.name,
+            "phonenumber": userinfo.phonenumber
+        }
+        return jsonify(info)
+    elif is_responder():
+        responderinfo = db_session.query(ResponderInfo).filter(ResponderInfo.userid == current_user.userid)
+        info = {
+            "userid": current_user.userid,
+            "email": current_user.email,
+            "name": responderinfo.name,
+            "phonenumber": userinfo.phonenumber,
+            "type": responderinfo.type,
+            "address": responderinfo.address
+        }
+    else: # admin
+        return jsonify({"userid": current_user.userid, "email": current_user.email})
+
 @app.route("/notifications/<int:offset>", methods=["GET"])
 @login_required
 def notifications(offset):
@@ -179,23 +204,26 @@ def notifications(offset):
 
     return jsonify(event_list)
 
+def check_eventstatus(status: int):
+    if status < 0 or status >= EventStatus.EVENT_STATUS_LEN.value:
+        return False
+    return True
+
 # error checking functions
-def check_eventtype(eventtype):
-    print(eventtype)
-    print(EventType.EVENT_TYPE_LEN.value)
+def check_eventtype(eventtype: int):
     if eventtype < 0 or eventtype >= EventType.EVENT_TYPE_LEN.value:
         return False
     return True
 
-def check_location(city, district):
+def check_location(city: int, district: int):
     if city < 0 or city >= City.CITY_LEN.value:
         return False
     if district < 0 or district >= len(DISTRICTS[city]):
         return False
     return True
 
-def check_animaltype(animaltype):
-    if type(animaltype) is not int or animaltype < 0 or animaltype >= AnimalType.ANIMAL_TYPE_LEN.value:
+def check_animaltype(animaltype: int):
+    if animaltype < 0 or animaltype >= AnimalType.ANIMAL_TYPE_LEN.value:
         return False
     return True
 
@@ -339,34 +367,109 @@ def reported_events(offset):
 
     return jsonify(event_list)
 
-@app.route("/event/<int:eventid>", methods=["GET"])
+@app.route("/event/<int:eventid>", methods=["GET", "POST"])
 @login_required
 def event(eventid):
-    db_session = get_db_session()
+    if request.type == "GET":
+        db_session = get_db_session()
 
-    query_event = select(Event, ResponderInfo.name.label("responder_name")) \
-            .outerjoin(ResponderInfo, ResponderInfo.responderid == Event.responderid) \
-            .filter(Event.eventid == eventid).first()
+        query_event = select(Event, ResponderInfo.name.label("responder_name"), ) \
+                .outerjoin(ResponderInfo, ResponderInfo.responderid == Event.responderid) \
+                .filter(Event.eventid == eventid).first()
 
-    event = db_session.execute(query_event)
-    # test if outerjoin works (includes all events that have responder = Null values)
+        event = db_session.execute(query_event)
+        # test if outerjoin works (includes all events that have responder = Null values)
+        query_animals = select(Animal, Placement.name.label("placement_name")) \
+            .outerjoin(Placement, Placement.placementid == Animal.placementid) \
+            .filter(Animal.eventid == eventid).all()
 
-    result = {
-        "eventid": event.eventid,
-        "eventtype": event.eventtype,
-        "userid": event.userid,
-        "responderid": event.responderid,
-        "respondername": event.responder_name,
-        "status": event.status,
-        "shortdescription": event.shortdescription,
-        "city": event.city,
-        "district": event.district,
-        "createdat": str(event.createdat)
-    }
+        eventanimals = db_session.execute(query_animals)
 
-    db_session.close()
+        animallist = [
+            {
+                "animalid": animal.animalid,
+                "placementid": animal.placementid,
+                "placementname": animal.placement_name,
+                "type": animal.type,
+                "description": animal.description
+            }
+        for animal in eventanimals]
 
-    return jsonify(result)
+        result = {
+            "eventid": event.eventid,
+            "eventtype": event.eventtype,
+            "userid": event.userid,
+            "responderid": event.responderid,
+            "respondername": event.responder_name,
+            "status": event.status,
+            "shortdescription": event.shortdescription,
+            "city": event.city,
+            "district": event.district,
+            "createdat": str(event.createdat),
+            "animals": animallist
+        }
+
+        db_session.close()
+
+        return jsonify(result)
+
+    # POST
+    if is_responder():
+        # event info updates
+        eventid = request.values["eventid"]
+        updated_event_info = {}
+
+        if "eventtype" in request.form:
+            updated_event_info["eventtype"] = EVENT_TYPE[request["eventtype"]]
+
+        if "status" in request.form:
+            if check_eventstatus(request.values["status"]):
+                updated_event_info["status"] = EVENT_STATUS[request.values["status"]]
+            else:
+                return jsonify({"error", "invalid location"})
+
+        if "shortdescription" in request.form:
+            updated_event_info["shortdescription"] = request.values["shortdescription"]
+
+        if "city" in request.values and "district" in request.values:
+            if check_location(request.values["city"], request.values["district"]):
+                updated_event_info["city"] = CITIES[request.values["city"]]
+                updated_event_info["district"] = DISTRICTS[request.values["district"]]
+            else:
+                return jsonify({"error", "invalid location"})
+
+        # animal updates
+        all_animal_updates = []
+        if "animals" in request.values:
+            # TODO: add animal information editing
+            animal_list = request.form.getlist("animals")
+
+            for animal in animal_list:
+                updated_animal_info = {}
+                updated_animal_info['animalid'] = animal['animalid']
+                if "description" in animal:
+                    updated_animal_info["description"] = animal["description"]
+                if "type" in animal:
+                    updated_animal_info["type"] = animal["type"]
+                if "placementid" in animal:
+                    updated_animal_info["placementid"] = animal["placementid"]
+
+                all_animal_updates.append(updated_animal_info)
+
+        try:
+            db_session = get_db_session()
+
+            # update event info
+            db_session.query(Event).filter(Event.eventid == eventid).update(updated_event_info)
+
+            # bulk update animal info
+            db_session.bulk_update_mappings(Animal, all_animal_updates)
+
+            db_session.commit()
+
+        except exc.SQLAlchemyError as e:
+            print("SQLAlchemyError: ", e._message)
+            db_session.rollback()
 
 # current users report record
 @app.route('/reportrecord/<int:offset>')
