@@ -1,28 +1,32 @@
 CREATE TABLE IF NOT EXISTS Users(
     UserId SERIAL NOT NULL,
     Password CHAR(60) NOT NULL,
-    Name VARCHAR(20) NOT NULL,
     Email VARCHAR(30) NOT NULL,
-    PhoneNumber CHAR(10) NOT NULL,
-    Status VARCHAR(15) NOT NULL,
+    Role VARCHAR(20) NOT NULL,
     PRIMARY KEY(UserId)
 );
 
-CREATE TABLE IF NOT EXISTS Admin(
-    AdminId SERIAL NOT NULL,
-    Password CHAR(60) NOT NULL,
-    PRIMARY KEY(AdminId)
+CREATE TABLE IF NOT EXISTS UserInfo(
+    UserId SERIAL NOT NULL,
+    Name VARCHAR(20) NOT NULL,
+    PhoneNumber CHAR(10) NOT NULL,
+    Status VARCHAR(15) NOT NULL,
+    PRIMARY KEY(UserId),
+    FOREIGN KEY(UserId) REFERENCES Users(UserId)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS Responder(
+CREATE TABLE IF NOT EXISTS ResponderInfo(
     ResponderId SERIAL NOT NULL,
     ResponderName VARCHAR(60) NOT NULL UNIQUE,
-    Password CHAR(60) NOT NULL,
-    Email VARCHAR(30) NOT NULL, -- Add a constraint checking on the email format
     PhoneNumber CHAR(10) NOT NULL UNIQUE,
     ResponderType VARCHAR(60) NOT NULL,
     Address VARCHAR(60) NOT NULL,
-    PRIMARY KEY(ResponderId)
+    PRIMARY KEY(ResponderId),
+    FOREIGN KEY(ResponderId) REFERENCES Users(UserId)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS Event(
@@ -40,7 +44,7 @@ CREATE TABLE IF NOT EXISTS Event(
     FOREIGN KEY(UserId) REFERENCES Users(UserId)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
-    FOREIGN KEY(ResponderId) REFERENCES Responder(ResponderId)
+    FOREIGN KEY(ResponderId) REFERENCES Users(UserId)
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
@@ -96,7 +100,7 @@ CREATE TABLE IF NOT EXISTS Warning(
     FOREIGN KEY(EventId) REFERENCES Event(EventId)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
-    FOREIGN KEY(ResponderId) REFERENCES Responder(ResponderId)
+    FOREIGN KEY(ResponderId) REFERENCES Users(UserId)
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
@@ -110,24 +114,12 @@ CREATE TABLE IF NOT EXISTS Report(
     FOREIGN KEY(EventId) REFERENCES Event(EventId)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
-    FOREIGN KEY(ResponderId) REFERENCES Responder(ResponderId)
+    FOREIGN KEY(ResponderId) REFERENCES Users(UserId)
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS ResponderSubscriptionRecord(
-    ChannelId INT NOT NULL,
-    ResponderId INT NOT NULL,
-    PRIMARY KEY(ChannelId, ResponderId),
-    FOREIGN KEY(ChannelId) REFERENCES Channel(ChannelId)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY(ResponderId) REFERENCES Responder(ResponderId)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS UserSubscriptionRecord(
+CREATE TABLE IF NOT EXISTS SubscriptionRecord(
     ChannelId INT NOT NULL,
     UserId INT NOT NULL,
     PRIMARY KEY(ChannelId, UserId),
@@ -151,7 +143,7 @@ CREATE TABLE IF NOT EXISTS EventCategory(
         ON UPDATE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS UserNotification(
+CREATE TABLE IF NOT EXISTS Notification(
     NotificationType VARCHAR(7) NOT NULL,
     EventId INT NOT NULL,
     NotifiedUserId INT NOT NULL,
@@ -161,20 +153,6 @@ CREATE TABLE IF NOT EXISTS UserNotification(
         ON DELETE CASCADE
         ON UPDATE CASCADE,
     FOREIGN KEY(NotifiedUserId) REFERENCES Users(UserId)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS ResponderNotification(
-    NotificationType VARCHAR(7) NOT NULL,
-    EventId INT NOT NULL,
-    NotifiedResponderId INT NOT NULL,
-    NotificationTimestamp TIMESTAMP NOT NULL,
-    PRIMARY KEY(EventId, NotifiedResponderId),
-    FOREIGN KEY(EventId) REFERENCES Event(EventId)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY(NotifiedResponderId) REFERENCES Responder(ResponderId)
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
