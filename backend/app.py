@@ -412,6 +412,22 @@ def event(eventid):
             "animals": animallist
         }
 
+        if event.status == EVENT_STATUS[EventStatus.RESOLVED.value]:
+            # fetch report info
+            warning = db_session.query(Warning).filter(Warning.eventid == event.eventid).first()
+            result["warning"] = {
+                "warninglevel": warning.warninglevel,
+                "shortdescription": warning.shortdescription,
+                "createdat": warning.createdat
+            }
+        elif event.status == EVENT_STATUS[EventStatus.FAILED.value]:
+            # fetch warning info
+            report = db_session.query(Report).filter(Report.eventid == event.eventid).first()
+            result["report"] = {
+                "shortdescription": report.shortdescription,
+                "createdat": report.createdat
+            }
+
         db_session.close()
 
         return render_template("../frontend/event.html", result=result)
@@ -421,62 +437,108 @@ def event(eventid):
     if is_responder():
         # event info updates
         eventid = request.values["eventid"]
-        updated_event_info = {}
 
-        if "eventtype" in request.form:
-            updated_event_info["eventtype"] = EVENT_TYPE[request["eventtype"]]
+        db_session = get_db_session()
 
-        if "status" in request.form:
-            if check_eventstatus(request.values["status"]):
-                updated_event_info["status"] = EVENT_STATUS[request.values["status"]]
-            else:
-                return jsonify({"error", "invalid location"})
+        # get the event item to do some checks
+        event = db_session.query(Event).filter(Event.eventid == eventid).first()
 
-        if "shortdescription" in request.form:
-            updated_event_info["shortdescription"] = request.values["shortdescription"]
+        # check the event status
+        if event.status == EVENT_STATUS[EventStatus.UNRESOLVED.value]:
+            # no responder has accepted this event yet
+            if "status" in request.form and request.values["status"] == EVENT_STATUS[EventStatus.ONGOING.value]:
+                # responder accepts event
+                try:
+                    # lock
+                    locked_event = db_session.query(Event).with_for_update().filter(Event.eventid == eventid).first()
 
-        if "city" in request.values and "district" in request.values:
-            if check_location(request.values["city"], request.values["district"]):
-                updated_event_info["city"] = CITIES[request.values["city"]]
-                updated_event_info["district"] = DISTRICTS[request.values["district"]]
-            else:
-                return jsonify({"error", "invalid location"})
+                    # update
+                    locked_event.status = EVENT_STATUS[EventStatus.ONGOING.value]
+                    locked_event.responderid = current_user.userid
 
-        # animal updates
-        all_animal_updates = []
-        if "animals" in request.form:
-            # TODO: add animal information editing
-            animal_list = request.form.getlist("animals")
+                    db_session.commit()
 
-            for animal in animal_list:
-                updated_animal_info = {}
-                updated_animal_info['animalid'] = animal['animalid']
-                if "description" in animal:
-                    updated_animal_info["description"] = animal["description"]
-                if "type" in animal:
-                    updated_animal_info["type"] = animal["type"]
-                if "placementid" in animal:
-                    updated_animal_info["placementid"] = animal["placementid"]
+                except exc.SQLAlchemyError as e:
+                    print("error", e._message)
+                    print("failed to accept event")
+                    db_session.rollback()
 
-                all_animal_updates.append(updated_animal_info)
+        elif event.status == EVENT_STATUS[EventStatus.ONGOING.value] and event.responderid == current_user.userid:
+            # current_user is the responder for this event
+            # udpate event info
+            try:
+                # lock event
+                locked_event = db_session.query(Event).with_for_update().filter(Event.eventid == eventid).first()
 
-        try:
-            db_session = get_db_session()
+                if "status" in request.form:
+                    if request.values["status"] == EventStatus.UNRESOLVED.value:
+                        # responder reverts acceptance of the event
+                        # other responders may now accept the event
+                        # current responder is only allowed to change the status to unresolved
+                        # no other values should be changed
+                        locked_event.status = EVENT_STATUS[EventStatus.UNRESOLVED.value]
+                        locked_event.responderid = None
+                        db_session.commit()
 
-            # update event info
-            db_session.query(Event).filter(Event.eventid == eventid).update(updated_event_info)
+                    if request.values["status"] == EventStatus.FALSE_ALARM.value:
+                        # responder can set eventstatus to false alarm and also change other event values
+                        locked_event.status = EVENT_STATUS[EventStatus.FALSE_ALARM.value]
 
-            # bulk update animal info
-            db_session.bulk_update_mappings(Animal, all_animal_updates)
+                    else:
+                        db_session.close()
+                        return jsonify({"error", "invalid status update"})
 
-            db_session.commit()
+                if "eventtype" in request.form and check_eventtype(request.values["eventtype"]):
+                    locked_event.eventtype = EVENT_TYPE[request["eventtype"]]
+                else:
+                    db_session.close()
+                    return jsonify({"error", "invalid eventtype"})
 
-        except exc.SQLAlchemyError as e:
-            print("SQLAlchemyError: ", e._message)
+                if "shortdescription" in request.form:
+                    locked_event.shortdescription = request.values["shortdescription"]
 
-            db_session.rollback()
+                if "city" in request.values and "district" in request.values:
+                    if check_location(request.values["city"], request.values["district"]):
+                        locked_event.city = CITIES[request.values["city"]]
+                        locked_event.district = DISTRICTS[request.values["district"]]
+                    else:
+                        db_session.close()
+                        return jsonify({"error", "invalid location"})
 
-            return jsonify({"error": "error updating event info"})
+                # animal updates
+                # animals do not need to be locked
+                # animals will not be updated if their corresponding event has not been locked already
+
+                all_animal_updates = []
+
+                if "animals" in request.form:
+                    animal_list = request.form.getlist("animals")
+
+                    for animal in animal_list:
+                        updated_animal_info = {}
+                        updated_animal_info['animalid'] = animal['animalid']
+                        if "description" in animal:
+                            updated_animal_info["description"] = animal["description"]
+                        if "type" in animal:
+                            updated_animal_info["type"] = animal["type"]
+                        if "placementid" in animal:
+                            updated_animal_info["placementid"] = animal["placementid"]
+
+                        all_animal_updates.append(updated_animal_info)
+
+                db_session.bulk_update_mappings(Animal, all_animal_updates)
+                db_session.commit()
+
+            except exc.SQLAlchemyError as e:
+                print("SQLAlchemyError: ", e._message)
+
+                db_session.rollback()
+
+                return jsonify({"error": "error updating event info"})
+
+        else:
+            # responder should not be able to edit this event
+            return redirect(url_for("event", eventid=eventid))
 
 # current users report record
 @app.route('/reportrecord/<int:offset>')
