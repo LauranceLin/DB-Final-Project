@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, url_for, jsonify
+from flask import Flask, request, redirect, url_for, jsonify, render_template
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from schema.database import get_db_session
 from schema.models import *
@@ -92,7 +92,7 @@ def user_loader(userid):
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "GET":
-        return "Return register page"
+        render_template("../frontend/register.html")
 
     email = request.values['email']
     password = request.values['password']
@@ -115,19 +115,24 @@ def register():
 
         db_session.add(new_userinfo)
         db_session.commit()
+
     except exc.SQLAlchemyError as e:
         print("Rollback, due to error: ", e._message)
+
         db_session.rollback()
+        db_session.close()
+
+        return redirect(url_for("register"))
 
     db_session.close()
 
-    return "Created new user"
+    return redirect(url_for("login"))
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
     # GET
     if request.method == "GET":
-        return "Login page!"
+        render_template("../frontend/login.html")
 
     # POST
     email = request.values['email']
@@ -142,7 +147,7 @@ def login():
     if user and bcrypt.checkpw(password.encode(), user.password.encode()):
         login_user(user)
         print("User logged in!")
-        return redirect(url_for("notifications/0"))
+        return redirect(url_for("notifications", offset=0))
     else:
         print("Login failed")
         return redirect(url_for("login"))
@@ -224,13 +229,14 @@ def notifications(offset):
 
     db_session.close()
 
-    return jsonify(event_list)
+    return render_template("../frontend/notifications.html", event_list=event_list)
 
 @app.route("/addevent", methods=["GET", "POST"])
 @login_required
 def add_event():
     if request.method == "GET":
-        return "return the add event page"
+        render_template("../frontend/addevent.html")
+
     else:
         db_session = get_db_session()
 
@@ -362,7 +368,7 @@ def reported_events(offset):
         }
         event_list.append(e)
 
-    return jsonify(event_list)
+    return render_template("../frontend/reported_events.html", event_list=event_list)
 
 @app.route("/event/<int:eventid>", methods=["GET", "POST"])
 @login_required
@@ -408,7 +414,7 @@ def event(eventid):
 
         db_session.close()
 
-        return jsonify(result)
+        return render_template("../frontend/event.html", result=result)
 
     # POST
     # TODO: Test the responder editing functions
@@ -467,7 +473,10 @@ def event(eventid):
 
         except exc.SQLAlchemyError as e:
             print("SQLAlchemyError: ", e._message)
+
             db_session.rollback()
+
+            return jsonify({"error": "error updating event info"})
 
 # current users report record
 @app.route('/reportrecord/<int:offset>')
@@ -497,7 +506,7 @@ def reportrecord(offset):
         }
         event_list.append(e)
 
-    return jsonify(event_list)
+    return render_template("../frontend/reportrecord.html", event_list=event_list)
 
 @app.route("/subscription/<int:offset>", methods=["GET", "POST"])
 @login_required
@@ -521,7 +530,7 @@ def subscription(offset):
             subscribed_channels.append(c_info)
 
         db_session.close()
-        return jsonify(subscribed_channels)
+        return render_template("../frontend/subscription.html", subscribed_channels)
 
     # TODO: Test the delete functionality
     # POST (delete subscription)
@@ -534,7 +543,7 @@ def subscription(offset):
             .filter(SubscriptionRecord.userid == current_user.userid) \
             .delete()
 
-        return redirect(url_for(f"/subscription/{offset}"))
+        return redirect(url_for("subscription", offset=offset))
 
     # POST (add subscription)
     if 'eventdistrict' in request.form:
@@ -568,7 +577,7 @@ def subscription(offset):
         db_session.rollback()
     db_session.close()
 
-    return f"added a new subscription record!"
+    return redirect(url_for("subscription", offset=offset))
 
 @app.route("/logout")
 @login_required
@@ -584,7 +593,7 @@ def event_results(eventid):
 
     # only responders can access this page
     if not is_responder():
-        redirect(url_for(f"/event/{eventid}"))
+        redirect(url_for("event", eventid=eventid))
 
     if request.method == "GET":
         return "return the event result page"
@@ -616,7 +625,7 @@ def event_results(eventid):
         except exc.SQLAlchemyError as e:
             print("Error: ", e._message)
 
-        return "Created report!"
+        return redirect(url_for("event", eventid=eventid))
 
     else:
         # create new warning
@@ -662,7 +671,7 @@ def event_results(eventid):
         # TODO: create notifications
         create_notifications(notification_info)
 
-        return "Created warning!"
+        return redirect(url_for("event", eventid=eventid))
 
 @app.route("/respond_record/<int:offset>", methods=["GET"])
 def respond_record(offset):
