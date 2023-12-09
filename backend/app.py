@@ -145,6 +145,7 @@ def get_userinfo():
         userinfo = db_session.query(UserInfo).filter(UserInfo.userid == current_user.userid)
         info = {
             "userid": current_user.userid,
+            "role": current_user.role,
             "email": current_user.email,
             "name": userinfo.name,
             "phonenumber": userinfo.phonenumber
@@ -154,6 +155,7 @@ def get_userinfo():
         responderinfo = db_session.query(ResponderInfo).filter(ResponderInfo.userid == current_user.userid)
         info = {
             "userid": current_user.userid,
+            "role": current_user.role,
             "email": current_user.email,
             "name": responderinfo.name,
             "phonenumber": userinfo.phonenumber,
@@ -162,7 +164,7 @@ def get_userinfo():
         }
         return jsonify(info)
     else: # admin
-        return jsonify({"userid": current_user.userid, "email": current_user.email})
+        return jsonify({"userid": current_user.userid, "role": current_user.role, "email": current_user.email})
 
 @app.route("/notifications/<int:offset>", methods=["GET"])
 @login_required
