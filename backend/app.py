@@ -5,7 +5,7 @@ from schema.models import *
 import bcrypt
 import datetime
 from schema.enums import *
-from sqlalchemy import exc, select
+from sqlalchemy import exc, select, union, except_, intersect, delete
 from celery import Celery
 
 app = Flask(__name__)
@@ -35,12 +35,8 @@ def is_responder():
 @celery.task
 def create_notifications(notification_info):
     print("enter create notifications function")
-    print(notification_info)
-    notificationtype = notification_info["notificationtype"]
     eventid = notification_info["eventid"]
-    eventtype = notification_info["eventtype"]
-    eventdistrict = notification_info["eventdistrict"]
-    eventanimal = notification_info["eventanimals"]
+    notificationtype = notification_info["notificationtype"]
 
     db_session = get_db_session();
     try:
@@ -48,19 +44,9 @@ def create_notifications(notification_info):
 
         # first select all that match eventtype and eventdistrict
         subscriber_query = select(SubscriptionRecord.userid) \
-                        .join(Channel, SubscriptionRecord.channelid == Channel.channelid) \
-                        .filter((Channel.eventtype == eventtype) | (Channel.eventdistrict == eventdistrict)) \
+                        .join(EventCategory, EventCategory.channelid == SubscriptionRecord.channelid) \
+                        .filter(EventCategory.eventid == eventid) \
                         .distinct()
-        print("created first query")
-        # then match all animal types and union the queries
-        for animal in eventanimal:
-            new_animal_query = select(SubscriptionRecord.userid) \
-                        .join(Channel, SubscriptionRecord.channelid == Channel.channelid) \
-                        .filter(Channel.eventanimal == animal) \
-                        .distinct()
-
-            # union select only distinct values
-            subscriber_query.union(new_animal_query)
 
         # execute the query andn get resulting userids
         subscribed_users = db_session.execute(subscriber_query).all()
@@ -309,14 +295,16 @@ def add_event():
 
             print(f"Created new event with id: {new_event.eventid}")
 
-            notification_info["notificationtype"] = NOTIFICATION_TYPE[NotificationType.EVENT.value]
+            # save info for notification creation
             notification_info["eventid"] = new_event.eventid
-            notification_info["eventdistrict"] = new_event.district
-            notification_info["eventtype"] = new_event.eventtype
-            notification_info["eventanimals"] = []
+            notification_info["notificationtype"] = NOTIFICATION_TYPE[NotificationType.EVENT.value]
+
+            chnnl_query_1 = select(Channel.channelid). \
+                filter((Channel.eventdistrict == new_event.district) | (Channel.eventtype == new_event.eventtype)).distinct()
 
             # create animals
             for animal in eventanimals:
+
                 new_animaltype = ANIMAL_TYPE[animal['animaltype']]
                 new_animaldescription = animal['animaldescription']
                 new_animal = Animal(eventid=new_event.eventid, \
@@ -326,7 +314,20 @@ def add_event():
                 db_session.add(new_animal)
                 db_session.flush()
                 print(f"Created new animal with id: {new_animal.animalid}")
-                notification_info['eventanimals'].append(ANIMAL_TYPE[animal['animaltype']])
+
+                chnnl_query_2 = select(Channel.channelid). \
+                    filter((Channel.eventanimal == new_animal.type)).distinct()
+                chnnl_query_1.union(chnnl_query_2)
+
+                # notification_info['eventanimals'].append(ANIMAL_TYPE[animal['animaltype']])
+            event_channelids = db_session.execute(chnnl_query_1)
+
+            event_categories = [
+                EventCategory(eventid=new_event.eventid, channelid=channelid)
+                for channelid in event_channelids
+            ]
+
+            db_session.bulk_save_objects(event_categories)
 
             db_session.commit()
 
@@ -336,10 +337,9 @@ def add_event():
 
         db_session.close()
 
-        # TODO: Send out notifications with celery app
+        # Send out notifications with celery app
 
         create_notifications.delay(notification_info)
-        # create_notifications(notification_info)
 
         return "Created new event and animals"
 
@@ -469,6 +469,12 @@ def event(eventid):
             try:
                 # lock event
                 locked_event = db_session.query(Event).with_for_update().filter(Event.eventid == eventid).first()
+                saved_event_id = locked_event.eventid
+                # original channels this event maps to
+                event_channels_query = select(EventCategory.channelid).filter(EventCategory.channelid == eventid)
+
+                delete_channel_queries = [] # query channels corresponding to old values
+                add_channel_queries = [] # query channels corresponding to new values
 
                 if "status" in request.form:
                     if request.values["status"] == EventStatus.UNRESOLVED.value:
@@ -478,7 +484,10 @@ def event(eventid):
                         # no other values should be changed
                         locked_event.status = EVENT_STATUS[EventStatus.UNRESOLVED.value]
                         locked_event.responderid = None
+
                         db_session.commit()
+
+                        return redirect(url_for("event", eventid=saved_event_id))
 
                     if request.values["status"] == EventStatus.FALSE_ALARM.value:
                         # responder can set eventstatus to false alarm and also change other event values
@@ -489,6 +498,13 @@ def event(eventid):
                         return jsonify({"error", "invalid status update"})
 
                 if "eventtype" in request.form and check_eventtype(request.values["eventtype"]):
+                    old_eventtype = locked_event.eventtype
+                    # TODO: delete EventCategory entries
+                    delete_channel_queries.append(select(Channel.channelid).filter(Channel.eventtype == old_eventtype))
+
+                    # TODO: add new EventCategory entries
+                    add_channel_queries.append(select(Channel.channelid).filter(Channel.eventtype == EVENT_TYPE[request["eventtype"]]))
+
                     locked_event.eventtype = EVENT_TYPE[request["eventtype"]]
                 else:
                     db_session.close()
@@ -498,9 +514,19 @@ def event(eventid):
                     locked_event.shortdescription = request.values["shortdescription"]
 
                 if "city" in request.values and "district" in request.values:
+                    old_district = locked_event.district
+
                     if check_location(request.values["city"], request.values["district"]):
+
+                        # TODO: delete EventCategory entries
+                        delete_channel_queries.append(select(Channel.channelid).filter(Channel.eventdistrict == old_district))
+
+                        # TODO: add new EventCategory entries
+                        add_channel_queries.append(select(Channel.channelid).filter(Channel.eventdistrict == DISTRICTS[request.values['district']]))
+
                         locked_event.city = CITIES[request.values["city"]]
                         locked_event.district = DISTRICTS[request.values["district"]]
+
                     else:
                         db_session.close()
                         return jsonify({"error", "invalid location"})
@@ -520,13 +546,59 @@ def event(eventid):
                         if "description" in animal:
                             updated_animal_info["description"] = animal["description"]
                         if "type" in animal:
-                            updated_animal_info["type"] = animal["type"]
+                            if check_animaltype(animal["type"]):
+                                updated_animal_info["type"] = ANIMAL_TYPE[animal["type"]]
+                                # TODO: update EventCategory entries
+                                delete_channel_queries.append(select(Channel.channelid).filter(Channel.eventanimal == ANIMAL_TYPE[animal["type"]]))
+                                # TODO: update EventCategory entries
+                                add_channel_queries.append(select(Channel.channelid).filter(Channel.eventanimal == ANIMAL_TYPE[animal["type"]]))
+                            else:
+                                db_session.close()
+                                return jsonify({"error": "no such animal type"})
                         if "placementid" in animal:
                             updated_animal_info["placementid"] = animal["placementid"]
 
                         all_animal_updates.append(updated_animal_info)
 
                 db_session.bulk_update_mappings(Animal, all_animal_updates)
+
+                # deal with EventCategories
+                # all delete queries
+                if delete_channel_queries:
+                    delete_query = delete_channel_queries.pop(0)
+                    if delete_channel_queries:
+                        delete_query.union_all(*delete_channel_queries)
+                else:
+                    delete_query = None
+
+                # all add queries
+                if add_channel_queries:
+                    add_query = add_channel_queries.pop(0)
+                    if add_channel_queries:
+                        add_query.union_all(*add_channel_queries)
+                else:
+                    add_query = None
+
+                if add_query is not None:
+                    add_deleted = intersect([add_query, delete_query])
+                    add_new = except_([add_query, event_channels_query])
+
+                    add_new.union(add_deleted)
+
+                if delete_query is not None:
+                    delete_channels = except_([delete_query, add_query])
+
+                all_new_channels = [c.channelid for c in db_session.execute(add_new).all()]
+                all_deleted_channels = [c.channelid for c in db_session.execute(delete_channels).all()]
+
+                new_categories = [ EventCategory(eventid=saved_event_id, channelid=cid) for cid in all_new_channels ]
+
+                delete(EventCategory).where(EventCategory.eventid == saved_event_id).where(EventCategory.channelid.in_(all_deleted_channels))
+
+                db_session.bulk_save_objects(new_categories)
+
+                db_session.execute(delete)
+
                 db_session.commit()
 
             except exc.SQLAlchemyError as e:
@@ -711,13 +783,6 @@ def event_results(eventid):
             # populate nofication_info values
             notification_info["notificationtype"] = NOTIFICATION_TYPE[NotificationType.WARNING.value]
             notification_info["eventid"] = eventid
-
-            event = db_session.query(Event).filter(Event.eventid == eventid).first()
-
-            notification_info["eventtype"] = event.eventtype
-            notification_info["eventdistrict"] = event.district
-
-            notification_info["eventanimals"] = db_session.query(Animal.type).filter(Animal.eventid == eventid).distinct().all()
 
             db_session.add(new_warning)
 
