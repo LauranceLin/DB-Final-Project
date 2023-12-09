@@ -438,7 +438,7 @@ def event(eventid):
 
         # animal updates
         all_animal_updates = []
-        if "animals" in request.values:
+        if "animals" in request.form:
             # TODO: add animal information editing
             animal_list = request.form.getlist("animals")
 
@@ -606,6 +606,12 @@ def event_results(eventid):
         try:
             db_session = get_db_session()
             db_session.add(new_report)
+
+            # update the event status
+            db_session = get_db_session().query(Event). \
+                        filter(Event.eventid == eventid). \
+                        update({"status": EVENT_STATUS[EventStatus.RESOLVED.value]})
+
             db_session.commit()
         except exc.SQLAlchemyError as e:
             print("Error: ", e._message)
@@ -643,6 +649,12 @@ def event_results(eventid):
             notification_info["eventanimals"] = db_session.query(Animal.type).filter(Animal.eventid == eventid).distinct().all()
 
             db_session.add(new_warning)
+
+            # update the event status
+            db_session = get_db_session().query(Event). \
+                        filter(Event.eventid == eventid). \
+                        update({"status": EVENT_STATUS[EventStatus.FAILED.value]})
+
             db_session.commit()
         except exc.SQLAlchemyError as e:
             print("Error: ", e._message)
