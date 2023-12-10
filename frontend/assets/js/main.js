@@ -1,20 +1,46 @@
-$('#profileModal').on('show.bs.modal', function (event) {
-    var role = document.cookie.split('; ').find(row => row.startsWith('role=')).split('=')[1];
-    var id = document.cookie.split('; ').find(row => row.startsWith('id=')).split('=')[1];
 
-    fetch(`/info/${role}/${id}`)
-    .then(response => response.json())
-    .then(data => {
-        document.getElementById('idInput').value = id;
-        document.getElementById('nameInput').value = data.name;
-        document.getElementById('emailInput').value = data.email;
+fetch('/userinfo')
+.then(response => response.json())
+.then(data => {
+    if (data.role === 'user') {
+        document.getElementById('create-event').style.display = 'list-item';
+        document.getElementById('report-record').style.display = 'list-item';
+    } else if (data.role === 'responder') {
+        document.getElementById('respond-record').style.display = 'list-item';
+    }
+})
+.catch(error => {
+    console.error('Error fetching userinfo:', error);
+});
+
+const idInput = document.getElementById('idInput');
+const nameInput = document.getElementById('nameInput');
+const emailInput = document.getElementById('emailInput');
+const logoutBtn = document.getElementById('logoutBtn');
+const profileModal = document.getElementById('profileModal');
+
+profileModal.addEventListener('show.bs.modal', function () {
+    fetch('/userinfo')
+        .then(response => response.json())
+        .then(data => {
+            idInput.value = data.userid;
+            nameInput.value = data.name;
+            emailInput.value = data.email;
+        })
+        .catch(error => {
+            console.error('Error fetching userinfo:', error);
+        });
+});
+
+logoutBtn.addEventListener('click', () => {
+    fetch('/logout', {
+        method: 'GET'
+    })
+    .then(response => {
+        console.log('Logout successful');
+        window.location.href = '/login';
     })
     .catch(error => {
-        console.error('Error:', error);
+        console.error('Error during logout:', error);
     });
-});
-  
-document.getElementById('logoutBtn').addEventListener('click', function() {
-    document.cookie = "loggedIn=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    window.location.href = "login.html"; 
 });

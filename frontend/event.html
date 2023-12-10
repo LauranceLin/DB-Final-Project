@@ -78,58 +78,158 @@
         <div class="col-md-6">
             <h1> Event Information </h1>
             <a href="reported_events.html"> &lt; Back </a>
-            <form>
-                <div class="form-group row">
-                    <label for="cityInput" class="col-auto col-form-label"> City </label>
-                    <input type="text" class="col form-control" id="cityInput" value="{{ result.city }}" disabled>
+            <form method="post" action="{{ url_for('event') }}" class="border p-4 rounded shadow">
+              <div class="form-group row">
+                  <label for="citySelect" class="col-auto col-form-label"> City </label>
+                  <div class="col">
+                      <select class="form-select" id="citySelect" name="city" required disabled>
+                          <option value="" selected disabled> 選擇城市 </option>
+                          <option value="0" {% if result['city'] == 0 %} selected {% endif %}> 臺北市 </option>
+                          <option value="1" {% if result['city'] == 1 %} selected {% endif %}> 新北市 </option>
+                      </select>
+                  </div>
+              </div>
+              <div class="form-group row">
+                  <label for="districtSelect" class="col-auto col-form-label"> District </label>
+                  <div class="col">
+                      <select class="form-select" id="districtSelect" name="district" required disabled>
+                          <option value="" selected disabled> 選擇行政區 </option>
+                          {% if result['city'] == '0' %}
+                            <option value="Zhongzheng" {% if result['district'] == 'Zhongzheng' %} selected {% endif %}> 中正區 </option>
+                            <option value="Datong" {% if result['district'] == 'Datong' %} selected {% endif %}> 大同區 </option>
+                            <option value="Zhongshan" {% if result['district'] == 'Zhongshan' %} selected {% endif %}> 中山區 </option>
+                            <option value="Songshan" {% if result['district'] == 'Songshan' %} selected {% endif %}> 松山區 </option>
+                            <option value="Daan" {% if result['district'] == 'Daan' %} selected {% endif %}> 大安區 </option>
+                            <option value="Wanhua" {% if result['district'] == 'Wanhua' %} selected {% endif %}> 萬華區 </option>
+                            <option value="Xinyi" {% if result['district'] == 'Xinyi' %} selected {% endif %}> 信義區 </option>
+                            <option value="Shilin" {% if result['district'] == 'Shilin' %} selected {% endif %}> 士林區 </option>
+                            <option value="Beitou" {% if result['district'] == 'Beitou' %} selected {% endif %}> 北投區 </option>
+                            <option value="Neihu" {% if result['district'] == 'Neihu' %} selected {% endif %}> 內湖區 </option>
+                            <option value="Nangang" {% if result['district'] == 'Nangang' %} selected {% endif %}> 南港區 </option>
+                            <option value="Wenshan" {% if result['district'] == 'Wenshan' %} selected {% endif %}> 文山區 </option>
+                          {% elif result['city'] == '1' %}
+                            <option value="Wanli" {% if result['district'] == 'Wanli' %} selected {% endif %}> 萬里區 </option>
+                            <option value="Jinshan" {% if result['district'] == 'Jinshan' %} selected {% endif %}> 金山區 </option>
+                            <option value="Banqiao" {% if result['district'] == 'Banqiao' %} selected {% endif %}> 板橋區 </option>
+                            <option value="Xizhi" {% if result['district'] == 'Xizhi' %} selected {% endif %}> 汐止區 </option>
+                            <option value="Shenkeng" {% if result['district'] == 'Shenkeng' %} selected {% endif %}> 深坑區 </option>
+                            <option value="Shiding" {% if result['district'] == 'Shiding' %} selected {% endif %}> 石碇區 </option>
+                            <option value="Ruifang" {% if result['district'] == 'Ruifang' %} selected {% endif %}> 瑞芳區 </option>
+                            <option value="Pingxi" {% if result['district'] == 'Pingxi' %} selected {% endif %}> 平溪區 </option>
+                            <option value="Shuangxi" {% if result['district'] == 'Shuangxi' %} selected {% endif %}> 雙溪區 </option>
+                            <option value="Gongliao" {% if result['district'] == 'Gongliao' %} selected {% endif %}> 貢寮區 </option>
+                            <option value="Xindian" {% if result['district'] == 'Xindian' %} selected {% endif %}> 新店區 </option>
+                            <option value="Pinglin" {% if result['district'] == 'Pinglin' %} selected {% endif %}> 坪林區 </option>
+                            <option value="Wulai" {% if result['district'] == 'Wulai' %} selected {% endif %}> 烏來區 </option>
+                            <option value="Yonghe" {% if result['district'] == 'Yonghe' %} selected {% endif %}> 永和區 </option>
+                            <option value="Zhonghe" {% if result['district'] == 'Zhonghe' %} selected {% endif %}> 中和區 </option>
+                            <option value="Tucheng" {% if result['district'] == 'Tucheng' %} selected {% endif %}> 土城區 </option>
+                            <option value="Sanxia" {% if result['district'] == 'Sanxia' %} selected {% endif %}> 三峽區 </option>
+                            <option value="Shulin" {% if result['district'] == 'Shulin' %} selected {% endif %}> 樹林區 </option>
+                            <option value="Yingge" {% if result['district'] == 'Yingge' %} selected {% endif %}> 鶯歌區 </option>
+                            <option value="Sanchong" {% if result['district'] == 'Sanchong' %} selected {% endif %}> 三重區 </option>
+                            <option value="Xinzhuang" {% if result['district'] == 'Xinzhuang' %} selected {% endif %}> 新莊區 </option>
+                            <option value="Taishan" {% if result['district'] == 'Taishan' %} selected {% endif %}> 泰山區 </option>
+                            <option value="Linkou" {% if result['district'] == 'Linkou' %} selected {% endif %}> 林口區 </option>
+                            <option value="Luzhou" {% if result['district'] == 'Luzhou' %} selected {% endif %}> 蘆洲區 </option>
+                            <option value="Wugu" {% if result['district'] == 'Wugu' %} selected {% endif %}> 五股區 </option>
+                            <option value="Bali" {% if result['district'] == 'Bali' %} selected {% endif %}> 八里區 </option>
+                            <option value="Tamsui" {% if result['district'] == 'Tamsui' %} selected {% endif %}> 淡水區 </option>
+                            <option value="Sanzhi" {% if result['district'] == 'Sanzhi' %} selected {% endif %}> 三芝區 </option>
+                            <option value="Shimen" {% if result['district'] == 'Shimen' %} selected {% endif %}> 石門區 </option>
+                        {% endif %}
+                      </select>
+                  </div>
+              </div>
+              <div class="form-group row">
+                  <label for="roadInput" class="col-auto col-form-label"> Road </label>
+                  <div class="col">
+                      <input type="text" class="form-control" id="roadInput" name="shortaddress" placeholder="輸入路名" value="{{ result['shortaddress']}}" required disabled>
+                  </div>
+              </div> 
+              <div class="form-group row">
+                <label for="citySelect" class="col-auto col-form-label"> Animal </label>
+                <div class="col">
+                    <div id="animalContainer">
+                      {% for animal in animallist %}
+                      <div class="AnimalEntry">
+                          <select name="animals[{{ loop.index0 }}][type]" disabled>
+                              {% set options = ["狗", "貓", "鳥", "蛇", "鹿", "猴子", "魚", "熊", "其他"] %}
+                              {% for option in options %}
+                                  <option value="{{ loop.index0 }}" {% if loop.index0 == animal['type'] %} selected {% endif %}>{{ option }}</option>
+                              {% endfor %}
+                          </select>
+                          <select name="animals[{{ loop.index0 }}][placement]" disabled>
+                            {% for placement in placementlist %}
+                                <option value="{{ placement['placementid'] }}" {% if placement.placementname == animal['placementname'] %} selected {% endif %}>{{ placement['placementname'] }}</option>
+                            {% endfor %}
+                          </select>
+                          <input type="text" name="animals[{{ loop.index0 }}][description]" placeholder="動物描述" value="{{ animal['description'] }}" disabled>
+                      </div>
+                      {% endfor %}
+                    </div>
                 </div>
-                <div class="form-group row">
-                    <label for="districtInput" class="col-auto col-form-label"> District </label>
-                    <input type="text" class="col form-control" id="districtInput" value="{{ result.district }}" disabled>
-                </div>
-                <div class="form-group row">
-                    <!-- 後端沒有回傳shortaddress -->
-                    <label for="roadInput" class="col-auto col-form-label"> Road </label>
-                    <input type="text" class="col form-control" id="roadInput" value="{{ result.shortaddress }}" disabled>
-                </div>
-                <div class="form-group row">
-                    <!-- 後端沒有回傳animal -->
-                    <label for="animalInput" class="col-auto col-form-label"> Animal </label>
-                    <input type="text" class="col form-control" id="animalInput" value="{{ result.animal }}" disabled>
-                </div>
-                <div class="form-group row">
-                    <label for="typeInput" class="col-auto col-form-label"> Type </label>
-                    <input type="text" class="col form-control" id="typeInput" value="{{ result.eventtype }}" disabled>
-                </div>
-                <div class="form-group row">
-                    <label for="descriptionInput" class="col-auto col-form-label"> Description </label>
-                    <input type="text" class="col form-control" id="descriptionInput" value="{{ result.shortdescription }}" disabled>
-                </div>
-                <div class="form-group">
-                    <!-- 後端沒有回傳imgurl -->
-                    <label for="imageURLInput"> Image URL </label>
-                    <a href="{{ result.imageURL }}" target="_blank">{{ result.imageURL }}</a>
-                </div>
-                <div class="form-group row">
-                    <label for="createdAtInput" class="col-auto col-form-label"> Event Created At </label>
-                    <input type="text" class="col form-control" id="createdAtInput" value="{{ result.createdat }}" disabled>
-                </div>
-                <div class="form-group row">
-                    <!-- 後端應該要回傳responder name而非id -->
-                    <label for="responderInput" class="col-auto col-form-label"> Responder </label>
-                    <input type="text" class="col form-control" id="responderInput" value="{{ result.responderid }}" disabled>
-                </div>
-                <div class="form-group row">
-                    <label for="statusInput" class="col-auto col-form-label"> Event Status </label>
-                    <input type="text" class="col form-control" id="statusInput" value="{{ result.status }}" disabled>
-                </div>
-                <a href="reported_events.html" class="btn btn-primary mt-3 "> Close </a>
+              </div>
+              <div class="form-group row">
+                  <label for="eventTypeSelect" class="col-auto col-form-label"> Type </label>
+                  <div class="col">
+                      <select class="form-select" id="eventTypeSelect" name="eventtype" required disabled>
+                        <option value="" selected disabled> 選擇事件種類 </option>
+                        <option value="0" {% if result['eventtype'] == '0' %} selected {% endif %}> 動物路殺 </option>
+                        <option value="1" {% if result['eventtype'] == '1' %} selected {% endif %}> 動物阻礙交通 </option>
+                        <option value="2" {% if result['eventtype'] == '2' %} selected {% endif %}> 流浪動物 </option>
+                        <option value="3" {% if result['eventtype'] == '3' %} selected {% endif %}> 動物傷人 </option>
+                        <option value="4" {% if result['eventtype'] == '4' %} selected {% endif %}> 虐待動物 </option>
+                        <option value="5" {% if result['eventtype'] == '5' %} selected {% endif %}> 危險動物目擊 </option>
+                        <option value="6" {% if result['eventtype'] == '6' %} selected {% endif %}> 其他 </option>                        
+                      </select>
+                  </div>
+              </div>
+              <div class="form-group row">
+                  <label for="descriptionInput" class="col-auto col-form-label"> Description </label>
+                  <div class="col">
+                      <input type="text" class="form-control" id="descriptionInput" name="shortdescription" placeholder="輸入事件描述（選填）" value="{{ result['shortdescription'] }}" disabled>
+                  </div>
+              </div> 
+              <div class="form-group row">
+                  <label for="imageUrlInput" class="col-auto col-form-label"> Image Url </label>
+                  <div class="col">
+                      <input type="url" class="form-control" id="imageUrlInput" name="imageurl" placeholder="輸入事件照片網址（選填）" value="{{ result['imageurl'] }}" disabled>
+                  </div>
+              </div> 
+              <div class="form-group row">
+                <label for="createdAtInput" class="col-auto col-form-label"> Event Created At </label>
+                <input type="text" class="col form-control" id="createdAtInput" value="{{ result['createdat'] }}" readonly>
+              </div>
+              <div class="form-group row">
+                  <label for="responderInput" class="col-auto col-form-label"> Responder </label>
+                  <input type="text" class="col form-control" id="responderInput" value="{{ result['respondername'] }}" readonly>
+              </div>
+              <div class="form-group row">
+                  <label for="statusInput" class="col-auto col-form-label"> Event Status </label>
+                  <input type="text" class="col form-control" id="statusInput" value="{{ result['status'] }}" disabled>
+              </div>
+              <a href="reported_events.html" class="btn btn-primary mt-3 "> Close </a>
             </form>
+
+            <div class="col" id="report" style="display: none;">
+            {% if "warning" in result %}
+                <h1>Warning</h1>
+                <input type="text" class="row" disabled value="{{ result['warning']['warninglevel'] }}">
+                <input type="text" class="row" disabled value="{{ result['warning']['shortdescription'] }}">
+            {% elif "report" in result %}
+                <h1>Report</h1>
+                <input type="text" class="row" disabled value="{{ result['report']['shortdescription'] }}">
+                <input type="text" class="row" disabled value="{{ result['report']['createdat'] }}">
+            {% endif %}
+            </div>
+
         </div>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="assets/js/main.js"></script>
+  <script src="assets/js/event.js"></script>
 </body>
 </html>

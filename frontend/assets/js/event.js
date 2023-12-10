@@ -1,3 +1,19 @@
+fetch('/userinfo', {
+    method: 'GET',
+    credentials: 'same-origin'
+})
+.then(response => response.json())
+.then(function(data) {
+    if (data.role === 'user') {
+        document.getElementById('report').style.display = 'block';
+    } else {
+        document.getElementById('report').style.display = 'none';
+    }
+})
+.catch(function(error) {
+    console.error('There has been a problem with your fetch operation:', error);
+});
+
 const taipeiDistricts = [
     { value: 'Zhongzheng', textContent: '中正區' },
     { value: 'Datong', textContent: '大同區' },
@@ -73,46 +89,3 @@ citySelect.addEventListener('change', function () {
         });
     }
 });
-
-
-var addAnimalButton = document.getElementById('addAnimalBtn');
-var animalContainer = document.getElementById('animalContainer');
-var i = 0;
-
-addAnimalButton.addEventListener('click', function() {
-    var animalEntry = document.createElement('div');
-
-    var select = document.createElement('select');
-    select.name = 'eventanimals[' + i + '][animaltype]'; 
-    var options = ["狗", "貓", "鳥", "蛇", "鹿", "猴子", "魚", "熊", "其他"]; 
-    for (var j = 0; j < options.length; j++) {
-        var option = document.createElement('option');
-        option.value = j;
-        option.textContent = options[j];
-        select.appendChild(option);
-    }
-
-    var input = document.createElement('input');
-    input.type = 'text';
-    input.name = 'eventanimals[' + i + '][animaldescription]';
-    input.placeholder = '動物描述';
-
-    animalEntry.appendChild(select);
-    animalEntry.appendChild(input);
-    animalContainer.appendChild(animalEntry);
-
-    i++;
-});
-
-function resetForm() {
-    document.getElementById("citySelect").selectedIndex = 0;
-    document.getElementById("districtSelect").selectedIndex = 0;
-    document.getElementById("roadInput").value = "";
-    
-    var animalContainer = document.getElementById("animalContainer");
-    animalContainer.innerHTML = ""; 
-    
-    document.getElementById("eventTypeSelect").selectedIndex = 0;
-    document.getElementById("descriptionInput").value = "";
-    document.getElementById("imageUrlInput").value = "";
-}

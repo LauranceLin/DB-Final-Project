@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title> Homepage </title>
+  <title> Report Event Outcome </title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="assets/css/main.css" rel="stylesheet">
 </head>
@@ -22,7 +22,7 @@
             <a class="nav-link" href="reported_events/0"> All Events</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link active" aria-current="page" href="notifications/0"> Notifications </a>
+            <a class="nav-link" href="notifications/0"> Notifications </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="addevent.html" style="display: none;"> Create Event </a>
@@ -34,7 +34,7 @@
             <a class="nav-link" href="reportrecord/0" style="display: none;"> Report Record </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="respond_record/0" style="display: none;"> Respond Record </a>
+            <a class="nav-link" href="respond_record/0"> Respond Record </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#profileModal">
@@ -74,60 +74,49 @@
     </div>
   </div>
 
-  <!-- Notification -->
+  <!-- Create Event -->
   <div class="container">
-    <div class="row">
-      <!-- Filter -->
-      <div class="col-md-3">
-        <h4> Notification Type </h4>
-        <div class="form-check">
-          <input class="form-check-input" type="checkbox" value="Event" id="eventCheckbox" checked>
-          <label class="form-check-label" for="eventCheckbox"> Event </label>
-        </div>
-        <div class="form-check">
-          <input class="form-check-input" type="checkbox" value="Warning" id="warningCheckbox" checked>
-          <label class="form-check-label" for="warningCheckbox"> Warning </label>
-        </div>
-        <div class="mt-3">
-          <button id="clearFilterBtn" class="btn btn-secondary me-2"> Clear </button>
-          <button type="submit" id="confirmFilterBtn" class="btn btn-primary"> Confirm </button>
-        </div>
-      </div>
-
-      {% for notification in event_list %}
-      <div class="event justify-content-center">
-          <div>
-              <p>{{ notification['eventtype'] }} &raquo; &emsp; {{ notification['city'] }} / {{ notification['district'] }} /
-                  {% if notification['animals']|length == 1 %}
-                      {{ notification['animals'][0] }}
-                  {% elif notification['animals']|length == 2 %}
-                      {{ notification['animals'][0] }} / {{ notification['animals'][1] }}
-                  {% else %}
-                      {{ notification['animals'][0] }} / {{ notification['animals'][1] }} / ...
-                  {% endif %}
-              </p>
-          </div>
-          <div>
-              <p>
-                  &emsp;&emsp;&emsp;&emsp;&emsp; Published at {{ notification['createdat'] }} Status {{ notification['status'] }}
-                  <a href="/event/{{ notification['eventid'] }}"> Read more &raquo; </a>
-              </p>
-          </div>
-      </div>
-      {% endfor %}
-
-
-      <!-- Pagination -->
-      <div class="pagination justify-content-center">
-        <a href="{{ url_for('notifications', offset = offset - 1) }}" {% if offset == 0 %} class="disabled" {% endif %} {% if offset == 0 %} disabled {% endif %}> 上一頁 </a>
-        <span> Page {{ offset + 1 }} </span>
-        <a href="{{ url_for('notifications', offset = offset + 1) }}" {% if no_more_data %} class="disabled" {% endif %} {% if no_more_data %} disabled {% endif %}> 下一頁 </a>
-      </div>
+    <div>
+        <form method="post" action="{{ url_for('event_results') }}" class="border p-4 rounded shadow">
+            <h1 class="mb-4"> Report Event Outcome</h1>
+            <a href="event/{{ eventid }}"> &lt; Back </a>
+            <div class="row">
+                <label for="eventIdInput" class="col-auto col-form-label"> Event ID </label>
+                <div class="col">
+                    <input type="text" class="form-control" id="eventIdInput" name="eventid" value="{{ eventid }}" readonly>
+                </div>
+            </div> 
+            <div class="row">
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" value="report" id="reportRadio" name="result_type" checked>
+                    <label class="form-check-label" for="reportRadio"> Report </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" value="warning" id="warningRadio" name="result_type">
+                    <label class="form-check-label" for="warningRadio"> Warning </label>
+                    <select id="warningLevelSelect" disabled></select>
+                </div>
+            </div>
+            <div class="row">
+                <label for="descriptionInput" class="col-auto col-form-label"> Description </label>
+                <div class="col">
+                    <input type="text" class="form-control" id="descriptionInput" name="shortdescription" placeholder="輸入事件描述">
+                </div>
+            </div> 
+            <div class="row">
+                <div class="col-12">
+                    <div class="d-flex justify-content-start">
+                        <button type="button" onclick="resetForm()" class="btn btn-secondary me-2"> Cancel </button>
+                        <button type="submit" class="btn btn-primary"> Send </button>
+                    </div>
+                </div>
+            </div>
+        </form>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="assets/js/main.js"></script>
-  
+  <script src="assets/js/event_results.js"></script>
 </body>
 </html>
