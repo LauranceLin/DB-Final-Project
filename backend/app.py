@@ -138,7 +138,7 @@ def login():
         print("Login failed")
         return redirect(url_for("login"))
 
-@app.route("/userinfo", method=["GET"])
+@app.route("/userinfo", methods=["GET"])
 def get_userinfo():
     db_session = get_db_session()
     if is_user():
