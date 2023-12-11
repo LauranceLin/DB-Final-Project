@@ -5,10 +5,10 @@ from schema.models import *
 import bcrypt
 import datetime
 from schema.enums import *
-from sqlalchemy import exc, select, union, except_, intersect, delete
+from sqlalchemy import exc, select, except_, intersect, delete
 from celery import Celery
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='../frontend')
 app.secret_key = 'NnSELOhwoPri1o-RZR3d1A'
 app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379'
 app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379'
@@ -78,7 +78,7 @@ def user_loader(userid):
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "GET":
-        render_template("../frontend/register.html")
+        return render_template('register.html')
 
     email = request.values['email']
     password = request.values['password']
@@ -89,7 +89,6 @@ def register():
 
     hashed_password = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
-    print(new_user)
     try:
         new_user = Users(email=email, password=hashed_password, role=ROLE[0])
 
@@ -118,7 +117,7 @@ def register():
 def login():
     # GET
     if request.method == "GET":
-        render_template("../frontend/login.html")
+        return render_template("login.html")
 
     # POST
     email = request.values['email']
@@ -190,7 +189,6 @@ def notifications(offset):
         notified_events = db_session.query(Event) \
             .join(Notification, Notification.eventid == Event.eventid) \
             .filter(Notification.notifieduserid == current_user.userid) \
-            .filter(Notification.notificationtype == NOTIFICATION_TYPE[notification_type]) \
             .order_by(Notification.notificationtimestamp.desc()) \
             .offset(NUM_ITEMS_PER_PAGE*offset).limit(NUM_ITEMS_PER_PAGE).all()
 
@@ -217,13 +215,14 @@ def notifications(offset):
 
     db_session.close()
 
-    return render_template("../frontend/notifications.html", event_list=event_list)
+    # return render_template("notifications.html", event_list=event_list)
+    return event_list
 
 @app.route("/addevent", methods=["GET", "POST"])
 @login_required
 def add_event():
     if request.method == "GET":
-        render_template("../frontend/addevent.html")
+        return render_template("addevent.html")
 
     else:
         db_session = get_db_session()
@@ -370,7 +369,7 @@ def reported_events(offset):
         }
         event_list.append(e)
 
-    return render_template("../frontend/reported_events.html", event_list=event_list)
+    return render_template("reported_events.html", event_list=event_list)
 
 @app.route("/event/<int:eventid>", methods=["GET", "POST"])
 @login_required
@@ -432,7 +431,7 @@ def event(eventid):
 
         db_session.close()
 
-        return render_template("../frontend/event.html", result=result)
+        return render_template("event.html", result=result)
 
     # POST
     # TODO: Test the responder editing functions
@@ -642,7 +641,7 @@ def reportrecord(offset):
         }
         event_list.append(e)
 
-    return render_template("../frontend/reportrecord.html", event_list=event_list)
+    return render_template("reportrecord.html", event_list=event_list)
 
 @app.route("/subscription/<int:offset>", methods=["GET", "POST"])
 @login_required
@@ -666,7 +665,7 @@ def subscription(offset):
             subscribed_channels.append(c_info)
 
         db_session.close()
-        return render_template("../frontend/subscription.html", subscribed_channels)
+        return render_template("subscription.html", subscribed_channels)
 
     # TODO: Test the delete functionality
     # POST (delete subscription)
@@ -811,4 +810,4 @@ def respond_record(offset):
     # TODO: fetch all the events the responder responded to
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)

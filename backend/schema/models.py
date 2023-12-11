@@ -9,7 +9,7 @@ from schema.enums import USERS_STATUS, UsersStatus
 class Users(Base, UserMixin):
     __tablename__ = "users"
 
-    userid: Mapped[int] = mapped_column('userid', primary_key=True)
+    userid: Mapped[int] = mapped_column('userid', Integer, primary_key=True)
     password: Mapped[str] = mapped_column('password', CHAR(60))
     email: Mapped[str] = mapped_column('email', VARCHAR(30))
     role: Mapped[str] = mapped_column('role', VARCHAR(9)) # ROLES

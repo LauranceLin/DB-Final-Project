@@ -1,6 +1,6 @@
 import enum
 
-ROLE = ["User", "Responder", "Admin"]
+ROLE = ["user", "responder", "admin"]
 
 class UsersStatus(enum.Enum):
     ACTIVE = 0
