@@ -216,7 +216,7 @@ def notifications(offset):
     for event in notified_events:
         animals = db_session.query(Animal).filter(Animal.eventid == event.eventid).all()
 
-        animallist = [animal.__dict__ for animal in animals]
+        animallist = [ animal.type for animal in animals]
 
         e = {
             "eventid": event.eventid,
@@ -233,7 +233,7 @@ def notifications(offset):
         event_list.append(e)
 
     db_session.close()
-
+    print(event_list)
     return render_template("notifications.html", event_list=event_list, offset=offset)
 
 @app.route("/addevent", methods=["GET", "POST"])
