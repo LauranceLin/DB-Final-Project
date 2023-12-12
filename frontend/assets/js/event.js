@@ -4,15 +4,59 @@ fetch('/userinfo', {
 })
 .then(response => response.json())
 .then(function(data) {
+    const responderid = {{ result['responderid'] }};
     if (data.role === 'user') {
         document.getElementById('report').style.display = 'block';
     } else {
         document.getElementById('report').style.display = 'none';
+        document.getElementById('acceptBtn').style.display = 'block';
+
+        fetch('/placementinfo')
+        .then(response => response.json())
+        .then(function(placementData){
+            const animalEntries = document.querySelectorAll('.AnimalEntry');
+            
+            animalEntries.forEach((entry, index) => {
+                const animal = {{ animallist[index] | tojson }};
+                const selectElement = entry.querySelector('.placementSelect');
+                selectElement.innerHTML = '';
+
+                for (const placement of placementData.placement_list) {
+                    const option = document.createElement('option');
+                    option.setAttribute('value', placement.placementid);
+                    if (placement.placementname === animal['placementname']) {
+                        option.setAttribute('selected', true);
+                    }
+                    option.textContent = placement.placementname;
+                    selectElement.appendChild(option);
+                }
+            });
+        });
+
+        if(data.userid == responderid) {
+            document.getElementById('closeBtn').style.display = 'none';
+            document.getElementById('editZone').style.display = 'block';
+        }
     }
 })
 .catch(function(error) {
     console.error('There has been a problem with your fetch operation:', error);
 });
+
+function switchToEdit() {
+    document.getElementById('editZone').style.display = 'none';
+    document.getElementById('editMode').style.display = 'block';
+
+    document.getElementById('citySelect').disabled = false;
+    document.getElementById('districtSelect').disabled = false;
+    document.getElementById('roadInput').disabled = false;
+    document.getElementsByClassName('placementSelect').disabled = false;
+    document.getElementsByClassName('animalDescriptionInput').disabled = false;
+    document.getElementById('eventTypeSelect').disabled = false;
+    document.getElementById('descriptionInput').disabled = false;
+    document.getElementById('imageUrlInput').disabled = false;
+    document.getElementById('eventStatusSelect').disabled = false;
+}
 
 const taipeiDistricts = [
     { value: 'Zhongzheng', textContent: '中正區' },
@@ -73,14 +117,14 @@ citySelect.addEventListener('change', function () {
     hint.disabled = true;
     districtSelect.appendChild(hint);
 
-    if (citySelect.value === 'Taipei') {
+    if (citySelect.value === '0') {
         taipeiDistricts.forEach(district => {
             const option = document.createElement('option');
             option.value = district.value;
             option.textContent = district.textContent;
             districtSelect.appendChild(option);
         });
-    } else if (citySelect.value === 'NewTaipei') {
+    } else if (citySelect.value === '1') {
         newTaipeiDistricts.forEach(district => {
             const option = document.createElement('option');
             option.value = district.value;
