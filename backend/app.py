@@ -468,13 +468,11 @@ def event(eventid):
     # TODO: Test the responder editing functions
     elif request.method == "POST" and is_responder():
         # event info updates
-        print("IS RESPONDER!!")
 
         db_session = get_db_session()
 
         # get the event item to do some checks
         event = db_session.query(Event).filter(Event.eventid == eventid).first()
-        print("STILL ALIVE Y'ALL")
         # check the event status
         if event.status == EVENT_STATUS[EventStatus.UNRESOLVED.value]:
             # no responder has accepted this event yet
