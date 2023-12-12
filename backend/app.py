@@ -190,7 +190,7 @@ def notifications(offset):
     # TODO: Test the url parameter notificationtype
 
     if 'notificationtype' in request.args:
-        notification_type = request.args.get('notificationtype')
+        notification_type = int(request.args.get('notificationtype'))
 
         if not check_notificationtype(notification_type):
             return jsonify({"Error": "No such notificationtype"})
@@ -370,14 +370,53 @@ def add_event():
 @login_required
 def reported_events(offset):
 
+    if 'eventtype' in request.args:
+        eventtype = int(request.args.get('eventtype'))
+        if check_eventtype(eventtype):
+            eventtype = EVENT_TYPE[eventtype]
+        else:
+            return jsonify({"error": "no such eventtype"})
+    else:
+        eventtype = None
+
+    if 'eventdistrict' in request.args:
+        eventdistrict = request.args.get('eventdistrict')
+    else:
+        eventdistrict = None
+
+    if 'animaltype' in request.args:
+        animaltype = int(request.args.get('animaltype'))
+        if check_animaltype(animaltype):
+            animaltype = ANIMAL_TYPE[animaltype]
+        else:
+            return jsonify({"error": "no such animal type"})
+    else:
+        animaltype = None
+
     db_session = get_db_session()
     # TODO: Query most recent events
-    results = db_session.query(Event, func.string_agg(Animal.type, literal_column("','"))) \
-        .join(Animal, Animal.eventid == Event.eventid) \
-        .group_by(Event.eventid).order_by(Event.createdat.desc()) \
-        .offset(offset*NUM_ITEMS_PER_PAGE).limit(NUM_ITEMS_PER_PAGE).all()
-    print(results)
-    db_session.close()
+    if eventtype is None and eventdistrict is None and animaltype is None:
+        results = db_session.query(Event, func.string_agg(Animal.type, literal_column("','"))) \
+            .join(Animal, Animal.eventid == Event.eventid) \
+            .group_by(Event.eventid).order_by(Event.createdat.desc()) \
+            .offset(offset*NUM_ITEMS_PER_PAGE).limit(NUM_ITEMS_PER_PAGE).all()
+
+        db_session.close()
+    else:
+        filter_channel = db_session.query(Channel) \
+            .filter(Channel.eventanimal == animaltype) \
+            .filter(Channel.eventdistrict == eventdistrict) \
+            .filter(Channel.eventtype == eventtype).first()
+
+        results = db_session.query(Event, func.string_agg(Animal.type, literal_column("','"))) \
+            .join(Animal, Animal.eventid == Event.eventid) \
+            .join(EventCategory, EventCategory.eventid == Event.eventid) \
+            .filter(EventCategory.channelid == filter_channel.channelid) \
+            .group_by(Event.eventid) \
+            .order_by(Event.createdat.desc()) \
+            .offset(offset*NUM_ITEMS_PER_PAGE).limit(NUM_ITEMS_PER_PAGE).all()
+
+        db_session.close()
 
     event_list = [
         {
