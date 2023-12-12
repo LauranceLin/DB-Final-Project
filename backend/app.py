@@ -248,14 +248,23 @@ def add_event():
         userid = current_user.userid
         responderid = None
         status = EVENT_STATUS[EventStatus.UNRESOLVED.value]
-
+        print("ALL REQUEST PARAMETERS: ", request.values)
         eventtype = request.values['eventtype']
         shortdescription = request.values['shortdescription']
         city = request.values['city']
         district = request.values['district']
         shortaddress = request.values['shortaddress']
         createdat = datetime.datetime.now()
-        eventanimals = [json.loads(animal) for animal in request.form.getlist('eventanimals')]
+        num_animals = len(request.form.getlist('animaltype'))
+        if num_animals != len(request.form.getlist('animaldescription')):
+            return jsonify({"error": "wrong number of animals"})
+
+        eventanimals = [{
+            'animaltype': int(request.form.getlist('animaltype')[i]),
+            'animaldescription': request.form.getlist('animaldescription')[i]
+        } for i in range(num_animals)]
+
+        print(eventanimals)
 
         # error checking for event
         if len(shortaddress) > 30:
@@ -284,6 +293,8 @@ def add_event():
             for animal in eventanimals:
                 animaltype = animal['animaltype']
                 animaldescription = animal['animaldescription']
+                print(animaltype)
+                print(animaldescription)
                 if not check_animaltype(animaltype=animaltype):
                     return jsonify({"error": "AnimalType doesn't exist"})
                 if len(animaldescription) > 100:
