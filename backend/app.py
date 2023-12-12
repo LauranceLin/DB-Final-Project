@@ -5,8 +5,12 @@ from schema.models import *
 import bcrypt
 import datetime
 from schema.enums import *
-from sqlalchemy import exc, select, except_, intersect, delete
+from sqlalchemy import exc, select, except_, intersect, delete, union
 from celery import Celery
+import json
+
+from sqlalchemy.sql.elements import literal_column
+from sqlalchemy import func
 
 app = Flask(__name__, template_folder='../frontend')
 app.secret_key = 'NnSELOhwoPri1o-RZR3d1A'
@@ -26,10 +30,10 @@ NUM_ITEMS_PER_PAGE = 10
 def is_user():
     return current_user.role == ROLE[0]
 
-def is_admin():
+def is_responder():
     return current_user.role == ROLE[1]
 
-def is_responder():
+def is_admin():
     return current_user.role == ROLE[2]
 
 @celery.task
@@ -141,7 +145,7 @@ def login():
 def get_userinfo():
     db_session = get_db_session()
     if is_user():
-        userinfo = db_session.query(UserInfo).filter(UserInfo.userid == current_user.userid)
+        userinfo = db_session.query(UserInfo).filter(UserInfo.userid == current_user.userid).first()
         info = {
             "userid": current_user.userid,
             "role": current_user.role,
@@ -151,7 +155,7 @@ def get_userinfo():
         }
         return jsonify(info)
     elif is_responder():
-        responderinfo = db_session.query(ResponderInfo).filter(ResponderInfo.userid == current_user.userid)
+        responderinfo = db_session.query(ResponderInfo).filter(ResponderInfo.userid == current_user.userid).first()
         info = {
             "userid": current_user.userid,
             "role": current_user.role,
@@ -215,8 +219,7 @@ def notifications(offset):
 
     db_session.close()
 
-    # return render_template("notifications.html", event_list=event_list)
-    return event_list
+    return render_template("notifications.html", event_list=event_list, offset=offset)
 
 @app.route("/addevent", methods=["GET", "POST"])
 @login_required
@@ -237,12 +240,7 @@ def add_event():
         district = request.values['district']
         shortaddress = request.values['shortaddress']
         createdat = datetime.datetime.now()
-
-        # error checking for animal
-        try:
-            eventanimals = request.form.getlist('eventanimals')
-        except:
-            jsonify({"error": "eventanimals should be a list of dictionaries"})
+        eventanimals = [json.loads(animal) for animal in request.form.getlist('eventanimals')]
 
         # error checking for event
         if len(shortaddress) > 30:
@@ -266,13 +264,18 @@ def add_event():
         except:
             return jsonify({"error": "Location doesn't exist"})
 
-        for animal in eventanimals:
-            animaltype = animal['animaltype']
-            animaldescription = animal['animaldescription']
-            if not check_animaltype(animaltype=animaltype):
-                return jsonify({"error": "AnimalType doesn't exist"})
-            if len(animaldescription) > 100:
-                return jsonify({"error": "Animal description too long"})
+        # error checking for animal
+        try:
+            for animal in eventanimals:
+                animaltype = animal['animaltype']
+                animaldescription = animal['animaldescription']
+                if not check_animaltype(animaltype=animaltype):
+                    return jsonify({"error": "AnimalType doesn't exist"})
+                if len(animaldescription) > 100:
+                    return jsonify({"error": "Animal description too long"})
+        except:
+            jsonify({"error": "eventanimals should be a list of dictionaries"})
+
 
         notification_info = {}
         # create event
@@ -300,12 +303,13 @@ def add_event():
             notification_info["eventid"] = new_event.eventid
             notification_info["notificationtype"] = NOTIFICATION_TYPE[NotificationType.EVENT.value]
 
-            chnnl_query_1 = select(Channel.channelid). \
-                filter((Channel.eventdistrict == new_event.district) | (Channel.eventtype == new_event.eventtype)).distinct()
+            channel_query_list = []
+            channel_query_list.append(select(Channel.channelid). \
+                filter((Channel.eventdistrict == new_event.district) | (Channel.eventtype == new_event.eventtype)).distinct())
 
             # create animals
+            animal_types = set()
             for animal in eventanimals:
-
                 new_animaltype = ANIMAL_TYPE[animal['animaltype']]
                 new_animaldescription = animal['animaldescription']
                 new_animal = Animal(eventid=new_event.eventid, \
@@ -316,15 +320,17 @@ def add_event():
                 db_session.flush()
                 print(f"Created new animal with id: {new_animal.animalid}")
 
-                chnnl_query_2 = select(Channel.channelid). \
-                    filter((Channel.eventanimal == new_animal.type)).distinct()
-                chnnl_query_1.union(chnnl_query_2)
+                animal_types.add(ANIMAL_TYPE[animal['animaltype']])
+
+            for type in animal_types:
+                channel_query_list.append(select(Channel.channelid).filter(Channel.eventanimal == type).distinct())
 
                 # notification_info['eventanimals'].append(ANIMAL_TYPE[animal['animaltype']])
-            event_channelids = db_session.execute(chnnl_query_1)
+            union_channel_query = union(*channel_query_list)
+            event_channelids = db_session.execute(union_channel_query).all()
 
             event_categories = [
-                EventCategory(eventid=new_event.eventid, channelid=channelid)
+                EventCategory(eventid=new_event.eventid, channelid=channelid[0])
                 for channelid in event_channelids
             ]
 
@@ -332,9 +338,10 @@ def add_event():
 
             db_session.commit()
 
-        except exc.SQLAlchemyError:
-            print(exc.SQLAlchemyError)
+        except exc.SQLAlchemyError as e:
+            print(e._message)
             db_session.rollback()
+            return redirect(url_for('add_event'))
 
         db_session.close()
 
@@ -342,7 +349,7 @@ def add_event():
 
         create_notifications.delay(notification_info)
 
-        return "Created new event and animals"
+        return redirect(url_for('event', eventid=notification_info["eventid"]))
 
 @app.route("/reported_events/<int:offset>", methods=["GET"])
 @login_required
@@ -350,52 +357,59 @@ def reported_events(offset):
 
     db_session = get_db_session()
     # TODO: Query most recent events
-    results = db_session.query(Event).order_by(Event.createdat.desc()).offset(offset*NUM_ITEMS_PER_PAGE).limit(NUM_ITEMS_PER_PAGE)
+    results = db_session.query(Event, func.string_agg(Animal.type, literal_column("','"))) \
+        .join(Animal, Animal.eventid == Event.eventid) \
+        .group_by(Event.eventid).order_by(Event.createdat.desc()) \
+        .offset(offset*NUM_ITEMS_PER_PAGE).limit(NUM_ITEMS_PER_PAGE).all()
+    print(results)
     db_session.close()
 
-    event_list = []
-
-    for event in results:
-        e = {
-            "eventid": event.eventid,
-            "eventtype": event.eventtype,
-            "userid": event.userid,
-            "responderid": event.responderid,
-            "status": event.status,
-            "shortdescription": event.shortdescription,
-            "city": event.city,
-            "district": event.district,
-            "createdat": str(event.createdat)
+    event_list = [
+        {
+            "eventid": event.Event.eventid,
+            "eventtype": event.Event.eventtype,
+            "userid": event.Event.userid,
+            "responderid": event.Event.responderid,
+            "status": event.Event.status,
+            "shortdescription": event.Event.shortdescription,
+            "city": event.Event.city,
+            "district": event.Event.district,
+            "createdat": str(event.Event.createdat),
+            "animals": event[1].split(',')
         }
-        event_list.append(e)
-
-    return render_template("reported_events.html", event_list=event_list)
+        for event in results
+    ]
+    # return event_list
+    return render_template("reported_events.html", event_list=event_list, offset=offset)
 
 @app.route("/event/<int:eventid>", methods=["GET", "POST"])
 @login_required
 def event(eventid):
-    if request.type == "GET":
+    if request.method == "GET":
         db_session = get_db_session()
 
-        query_event = select(Event, ResponderInfo.name.label("responder_name"), ) \
+        query_event = select(Event, ResponderInfo.name) \
                 .outerjoin(ResponderInfo, ResponderInfo.responderid == Event.responderid) \
-                .filter(Event.eventid == eventid).first()
+                .filter(Event.eventid == eventid)
 
-        event = db_session.execute(query_event)
+        eventinfo = db_session.execute(query_event).first()
+        event = eventinfo.Event
+        event_responder_name = eventinfo.name
         # test if outerjoin works (includes all events that have responder = Null values)
-        query_animals = select(Animal, Placement.name.label("placement_name")) \
+        query_animals = select(Animal, Placement.name) \
             .outerjoin(Placement, Placement.placementid == Animal.placementid) \
-            .filter(Animal.eventid == eventid).all()
+            .filter(Animal.eventid == eventid)
 
-        eventanimals = db_session.execute(query_animals)
+        eventanimals = db_session.execute(query_animals).all()
+        print(eventanimals)
 
         animallist = [
             {
-                "animalid": animal.animalid,
-                "placementid": animal.placementid,
-                "placementname": animal.placement_name,
-                "type": animal.type,
-                "description": animal.description
+                "animalid": animal.Animal.animalid,
+                "placementid": animal.Animal.placementid,
+                "placementname": animal.name,
+                "type": animal.Animal.type,
+                "description": animal.Animal.description
             }
         for animal in eventanimals]
 
@@ -404,7 +418,7 @@ def event(eventid):
             "eventtype": event.eventtype,
             "userid": event.userid,
             "responderid": event.responderid,
-            "respondername": event.responder_name,
+            "respondername": event_responder_name,
             "status": event.status,
             "shortdescription": event.shortdescription,
             "city": event.city,
@@ -430,24 +444,26 @@ def event(eventid):
             }
 
         db_session.close()
-
-        return render_template("event.html", result=result)
+        print(result)
+        # return result
+        return render_template("event.html", result=result, eventid=eventid)
 
     # POST
     # TODO: Test the responder editing functions
-    if is_responder():
+    elif request.method == "POST" and is_responder():
         # event info updates
-        eventid = request.values["eventid"]
+        print("IS RESPONDER!!")
 
         db_session = get_db_session()
 
         # get the event item to do some checks
         event = db_session.query(Event).filter(Event.eventid == eventid).first()
-
+        print("STILL ALIVE Y'ALL")
         # check the event status
         if event.status == EVENT_STATUS[EventStatus.UNRESOLVED.value]:
             # no responder has accepted this event yet
-            if "status" in request.form and request.values["status"] == EVENT_STATUS[EventStatus.ONGOING.value]:
+
+            if "status" in request.form and int(request.values["status"]) == EventStatus.ONGOING.value:
                 # responder accepts event
                 try:
                     # lock
@@ -458,14 +474,20 @@ def event(eventid):
                     locked_event.responderid = current_user.userid
 
                     db_session.commit()
+                    print("Unresolved --> Ongoing")
+                    return redirect(url_for("event", eventid=eventid))
 
                 except exc.SQLAlchemyError as e:
                     print("error", e._message)
                     print("failed to accept event")
                     db_session.rollback()
 
+            # responder does not wish to respond to this event
+            return redirect(url_for("event", eventid=eventid))
+
         elif event.status == EVENT_STATUS[EventStatus.ONGOING.value] and event.responderid == current_user.userid:
             # current_user is the responder for this event
+            print("Current user is the responder for this event")
             # udpate event info
             try:
                 # lock event
@@ -478,7 +500,7 @@ def event(eventid):
                 add_channel_queries = [] # query channels corresponding to new values
 
                 if "status" in request.form:
-                    if request.values["status"] == EventStatus.UNRESOLVED.value:
+                    if int(request.values["status"]) == EventStatus.UNRESOLVED.value: # 0
                         # responder reverts acceptance of the event
                         # other responders may now accept the event
                         # current responder is only allowed to change the status to unresolved
@@ -487,18 +509,21 @@ def event(eventid):
                         locked_event.responderid = None
 
                         db_session.commit()
-
+                        print("Ongoing --> Unresolved")
                         return redirect(url_for("event", eventid=saved_event_id))
 
-                    if request.values["status"] == EventStatus.FALSE_ALARM.value:
+                    if int(request.values["status"]) == EventStatus.FALSE_ALARM.value: # 3
                         # responder can set eventstatus to false alarm and also change other event values
+                        print("Ongoing --> False Alarm")
                         locked_event.status = EVENT_STATUS[EventStatus.FALSE_ALARM.value]
 
                     else:
                         db_session.close()
-                        return jsonify({"error", "invalid status update"})
+                        error = "error: invalid status update"
+                        return redirect(url_for("event", eventid=saved_event_id, error=error))
 
-                if "eventtype" in request.form and check_eventtype(request.values["eventtype"]):
+                # CONTINUE TESTING FROM HERE TOMORROW
+                if "eventtype" in request.form and check_eventtype(int(request.values["eventtype"])):
                     old_eventtype = locked_event.eventtype
                     # TODO: delete EventCategory entries
                     delete_channel_queries.append(select(Channel.channelid).filter(Channel.eventtype == old_eventtype))
@@ -602,6 +627,8 @@ def event(eventid):
 
                 db_session.commit()
 
+                return redirect(url_for("event", eventid=eventid))
+
             except exc.SQLAlchemyError as e:
                 print("SQLAlchemyError: ", e._message)
 
@@ -609,9 +636,9 @@ def event(eventid):
 
                 return jsonify({"error": "error updating event info"})
 
-        else:
-            # responder should not be able to edit this event
-            return redirect(url_for("event", eventid=eventid))
+    else:
+        # responder should not be able to edit this event
+        return redirect(url_for("event", eventid=eventid))
 
 # current users report record
 @app.route('/reportrecord/<int:offset>')
@@ -619,29 +646,60 @@ def event(eventid):
 def reportrecord(offset):
     db_session = get_db_session()
 
-    reported_events = db_session.query(Event) \
+    reported_events = db_session.query(Event, func.string_agg(Animal.type, literal_column("','"))) \
+        .join(Animal, Animal.eventid == Event.eventid) \
+        .group_by(Event.eventid) \
         .filter(Event.userid == current_user.userid) \
         .order_by(Event.createdat.desc()) \
-        .offset(offset*NUM_ITEMS_PER_PAGE).limit(NUM_ITEMS_PER_PAGE)
+        .offset(offset*NUM_ITEMS_PER_PAGE).limit(NUM_ITEMS_PER_PAGE).all()
 
+    """
+        db_session = get_db_session()
+    # TODO: Query most recent events
+    results = db_session.query(Event, func.string_agg(Animal.type, literal_column("','"))) \
+        .join(Animal, Animal.eventid == Event.eventid) \
+        .group_by(Event.eventid).order_by(Event.createdat.desc()) \
+        .offset(offset*NUM_ITEMS_PER_PAGE).limit(NUM_ITEMS_PER_PAGE).all()
+    print(results)
     db_session.close()
 
-    event_list = []
-    for event in reported_events:
-        e = {
-            "eventid": event.eventid,
-            "eventtype": event.eventtype,
-            "userid": event.userid,
-            "responderid": event.responderid,
-            "status": event.status,
-            "shortdescription": event.shortdescription,
-            "city": event.city,
-            "district": event.district,
-            "createdat": str(event.createdat)
+    event_list = [
+        {
+            "eventid": event.Event.eventid,
+            "eventtype": event.Event.eventtype,
+            "userid": event.Event.userid,
+            "responderid": event.Event.responderid,
+            "status": event.Event.status,
+            "shortdescription": event.Event.shortdescription,
+            "city": event.Event.city,
+            "district": event.Event.district,
+            "createdat": str(event.Event.createdat),
+            "animals": event[1].split(',')
         }
-        event_list.append(e)
+        for event in results
+    ]
+    # return event_list
+    return render_template("reported_events.html", event_list=event_list, offset=offset)
 
-    return render_template("reportrecord.html", event_list=event_list)
+    """
+    db_session.close()
+
+    event_list = [
+        {
+            "eventid": event.Event.eventid,
+            "eventtype": event.Event.eventtype,
+            "userid": event.Event.userid,
+            "responderid": event.Event.responderid,
+            "status": event.Event.status,
+            "shortdescription": event.Event.shortdescription,
+            "city": event.Event.city,
+            "district": event.Event.district,
+            "createdat": str(event.Event.createdat),
+            "animals": event[1].split(',')
+        }
+        for event in reported_events
+    ]
+    return render_template("reportrecord.html", event_list=event_list, offset=offset)
 
 @app.route("/subscription/<int:offset>", methods=["GET", "POST"])
 @login_required
@@ -665,36 +723,30 @@ def subscription(offset):
             subscribed_channels.append(c_info)
 
         db_session.close()
-        return render_template("subscription.html", subscribed_channels)
-
-    # TODO: Test the delete functionality
-    # POST (delete subscription)
-    if "delete" in request.form:
-        channelid = request.values["channelid"]
-
-        # delete subscription
-        db_session.query(SubscriptionRecord) \
-            .filter(SubscriptionRecord.channelid == channelid) \
-            .filter(SubscriptionRecord.userid == current_user.userid) \
-            .delete()
-
-        return redirect(url_for("subscription", offset=offset))
+        return render_template("subscription.html", subscribed_channels=subscribed_channels, offset=offset)
+        # return subscribed_channels
 
     # POST (add subscription)
-    if 'eventdistrict' in request.form:
+    if 'eventdistrict' in request.form and request.values['eventdistrict'] != '':
         eventdistrict = request.values['eventdistrict']
     else:
         eventdistrict = None
 
     if 'eventtype' in request.form:
-        eventtype = request.values['eventtype']
+        if request.values['eventtype'] != '' and check_eventtype(int(request.values['eventtype'])):
+            eventtype = EVENT_TYPE[int(request.values['eventtype'])]
+        else:
+            eventtype = None
     else:
         eventtype = None
 
     if 'eventanimal' in request.form:
-        eventanimal = request.values['eventanimal']
+        if request.values['eventanimal'] != '' and check_animaltype(int(request.values['eventanimal'])):
+            eventanimal = ANIMAL_TYPE[int(request.values['eventanimal'])]
+        else:
+            eventanimal = None
     else:
-        eventanimal = None
+            eventanimal = None
 
     selected_channel = db_session.query(Channel.channelid) \
         .filter(Channel.eventanimal == eventanimal) \
@@ -713,6 +765,26 @@ def subscription(offset):
     db_session.close()
 
     return redirect(url_for("subscription", offset=offset))
+
+@app.route("/delete_subscription/<int:channelid>", methods=["POST"])
+@login_required
+def delete_subscription(channelid):
+    db_session = get_db_session()
+    # delete subscription
+    # TODO: we need the previous offset so we redirect back to the same page as before, now we set it to 0
+
+    try:
+        db_session.query(SubscriptionRecord) \
+            .filter(SubscriptionRecord.channelid == channelid) \
+            .filter(SubscriptionRecord.userid == current_user.userid) \
+            .delete()
+
+        db_session.commit()
+    except exc.SQLAlchemyError as e:
+        print(e._message)
+        db_session.rollback()
+
+    return redirect(url_for("subscription", offset=0))
 
 @app.route("/logout")
 @login_required

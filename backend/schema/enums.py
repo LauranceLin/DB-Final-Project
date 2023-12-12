@@ -87,55 +87,16 @@ class City(enum.Enum):
     NEW_TAIPEI = 1
     CITY_LEN = 2
 
-CITIES = [
-    "Taipei", "New Taipei"
-]
-
+CITIES = ['台北市', '新北市']
 DISTRICTS = [
     [
-        'Songshan',     # 0
-        'Xinyi',        # 1
-        'Daan',         # 2
-        'Zhongshan',    # 3
-        'Zhongzheng',   # 4
-        'Datong',       # 5
-        'Wanhua',       # 6
-        'Wenshan',      # 7
-        'Nangang',      # 8
-        'Neihu',        # 9
-        'Shilin',       # 10
-        'Beitou'        # 11
+        '松山區', '信義區', '大安區', '中山區', '中正區', '大同區', '萬華區', '文山區', '南港區', '內湖區', '士林區',
+        '北投區'
     ],
     [
-        'Banqiao',      # 0
-        'Sanchong',     # 1
-        'Zhonghe',      # 2
-        'Yonghe',       # 3
-        'Xinzhuang',    # 4
-        'Xindian',      # 5
-        'Tucheng',      # 6
-        'Luzhou',       # 7
-        'Shulin',       # 8
-        'Xizhi',        # 9
-        'Yingge',       # 10
-        'Sanxia',       # 11
-        'Danshui',      # 12
-        'Ruifang',      # 13
-        'Wugu',         # 14
-        'Taishan',      # 15
-        'Linkou',       # 16
-        'Shenkeng',     # 17
-        'Shiding',      # 18
-        'Pinglin',      # 19
-        'Sanzhi',       # 20
-        'Shimen',       # 21
-        'Bali',         # 22
-        'Pingxi',       # 23
-        'Shuangxi',     # 24
-        'Gongliao',     # 25
-        'Jinshan',      # 26
-        'Wanli',        # 27
-        'Wulai'         # 28
+        '板橋區', '中和區', '新莊區', '土城區', '汐止區', '鶯歌區', '淡水區', '五股區', '林口區', '深坑區', '坪林區',
+        '石門區', '萬里區', '雙溪區', '烏來區', '三重區', '永和區', '新店區', '蘆洲區', '樹林區', '三峽區', '瑞芳區',
+        '泰山區', '八里區', '石碇區', '三芝區', '金山區', '平溪區', '貢寮區'
     ]
 ]
 
