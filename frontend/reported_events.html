@@ -47,7 +47,7 @@
   </nav>
 
   <!-- Profile Modal -->
-  <div class="modal" id="profileModal" tabindex="-1"> 
+  <div class="modal" id="profileModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
@@ -165,20 +165,20 @@
         {% for event in event_list %}
         <div class="event  justify-content-center ">
             <div class="event-header">
-                <p> Event &raquo; &emsp; {{ event['city'] }} / {{ event['district'] }} /                   
+                <p> Event &raquo; &emsp; {{ event['city'] }} / {{ event['district'] }} /
                   {% if event['animals']|length == 1 %}
                       {{ event['animals'][0] }}
-                  {% elif notification['animals']|length == 2 %}
+                  {% elif event['animals']|length == 2 %}
                       {{ event['animals'][0] }} / {{ event['animals'][1] }}
                   {% else %}
                       {{ event['animals'][0] }} / {{ event['animals'][1] }} / ...
                   {% endif %}
-                   / {{ event['eventtype'] }} 
+                   / {{ event['eventtype'] }}
                 </p>
             </div>
             <div class="event-details">
-                <p> 
-                    &emsp;&emsp;&emsp;&emsp;&emsp; Published at {{ event['createdat] }} Status {{ event['status'] }}
+                <p>
+                    &emsp;&emsp;&emsp;&emsp;&emsp; Published at {{ event['createdat'] }} Status {{ event['status'] }}
                     <a href="/event/{{ event['eventid'] }}"> Read more &raquo; </a>
                 </p>
             </div>
