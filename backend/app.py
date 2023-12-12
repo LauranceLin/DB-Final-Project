@@ -155,7 +155,7 @@ def get_userinfo():
         }
         return jsonify(info)
     elif is_responder():
-        responderinfo = db_session.query(ResponderInfo).filter(ResponderInfo.userid == current_user.userid).first()
+        responderinfo = db_session.query(ResponderInfo).filter(ResponderInfo.responderid == current_user.userid).first()
         info = {
             "userid": current_user.userid,
             "role": current_user.role,
@@ -860,9 +860,9 @@ def event_results(eventid):
         redirect(url_for("event", eventid=eventid))
 
     if request.method == "GET":
-        return "return the event result page"
+        return render_template("event_results.html", eventid=eventid)
 
-    result_type = request.values["result_type"]
+    result_type = int(request.values["result_type"])
 
     if not check_resulttype(result_type):
         return jsonify({"error": "no such notification type"})
@@ -893,7 +893,7 @@ def event_results(eventid):
 
     else:
         # create new warning
-        warninglevel = request.values["warninglevel"]
+        warninglevel = int(request.values["warninglevel"])
         if not check_warninglevel(warninglevel):
             return jsonify({"Error": "Warning level out of bounds"})
 
