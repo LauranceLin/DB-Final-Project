@@ -169,6 +169,21 @@ def get_userinfo():
     else: # admin
         return jsonify({"userid": current_user.userid, "role": current_user.role, "email": current_user.email})
 
+@app.route("/placementinfo", methods=["GET"])
+def get_placementinfo():
+    db_session = get_db_session()
+    placements = db_session.query(Placement.placementid, Placement.name).all()
+    print(placements)
+    placement_list = [
+        {
+            "placementid": p.placementid,
+            "placementname": p.name
+        }
+        for p in placements
+    ]
+    print(placement_list)
+    return jsonify(placement_list)
+
 @app.route("/notifications/<int:offset>", methods=["GET"])
 @login_required
 def notifications(offset):
@@ -423,6 +438,7 @@ def event(eventid):
             "shortdescription": event.shortdescription,
             "city": event.city,
             "district": event.district,
+            "shortaddress": event.shortaddress,
             "createdat": str(event.createdat),
             "animals": animallist
         }
