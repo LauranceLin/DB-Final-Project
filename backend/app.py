@@ -12,7 +12,7 @@ import json
 from sqlalchemy.sql.elements import literal_column
 from sqlalchemy import func
 
-app = Flask(__name__, template_folder='../frontend')
+app = Flask(__name__, template_folder='../frontend', static_url_path='/', static_folder='../frontend')
 app.secret_key = 'NnSELOhwoPri1o-RZR3d1A'
 app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379'
 app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379'
