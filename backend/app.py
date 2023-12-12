@@ -640,6 +640,29 @@ def event(eventid):
         # responder should not be able to edit this event
         return redirect(url_for("event", eventid=eventid))
 
+@app.route("/delete_event/<int:eventid>", methods=["POST"])
+@login_required
+def delete_event(eventid):
+    db_session = get_db_session()
+    try:
+        event = db_session.query(Event).filter(Event.eventid == eventid).first()
+
+        if event is not None:
+            if is_responder() or (is_user() and current_user.userid == event.userid):
+                db_session.delete(event)
+                db_session.commit()
+                db_session.close()
+
+    except exc.SQLAlchemyError as e:
+        print(e._message)
+        db_session.rollback()
+        db_session.close()
+
+    if is_responder():
+        return redirect(url_for('reported_events', offset=0))
+    elif is_user():
+        return redirect(url_for('reportrecord', offset=0))
+
 # current users report record
 @app.route('/reportrecord/<int:offset>')
 @login_required
@@ -652,36 +675,6 @@ def reportrecord(offset):
         .filter(Event.userid == current_user.userid) \
         .order_by(Event.createdat.desc()) \
         .offset(offset*NUM_ITEMS_PER_PAGE).limit(NUM_ITEMS_PER_PAGE).all()
-
-    """
-        db_session = get_db_session()
-    # TODO: Query most recent events
-    results = db_session.query(Event, func.string_agg(Animal.type, literal_column("','"))) \
-        .join(Animal, Animal.eventid == Event.eventid) \
-        .group_by(Event.eventid).order_by(Event.createdat.desc()) \
-        .offset(offset*NUM_ITEMS_PER_PAGE).limit(NUM_ITEMS_PER_PAGE).all()
-    print(results)
-    db_session.close()
-
-    event_list = [
-        {
-            "eventid": event.Event.eventid,
-            "eventtype": event.Event.eventtype,
-            "userid": event.Event.userid,
-            "responderid": event.Event.responderid,
-            "status": event.Event.status,
-            "shortdescription": event.Event.shortdescription,
-            "city": event.Event.city,
-            "district": event.Event.district,
-            "createdat": str(event.Event.createdat),
-            "animals": event[1].split(',')
-        }
-        for event in results
-    ]
-    # return event_list
-    return render_template("reported_events.html", event_list=event_list, offset=offset)
-
-    """
     db_session.close()
 
     event_list = [
