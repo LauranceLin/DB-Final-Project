@@ -110,7 +110,7 @@ class Channel(Base):
 class Warning(Base):
     __tablename__ = "warning"
     # foreign key
-    eventid: Mapped[int] = mapped_column("eventId", ForeignKey("event.eventid"), primary_key=True)
+    eventid: Mapped[int] = mapped_column("eventid", ForeignKey("event.eventid"), primary_key=True)
     # foreign key
     responderid: Mapped[int] = mapped_column("responderid", ForeignKey("users.userid"), primary_key=True)
 
@@ -121,7 +121,7 @@ class Warning(Base):
 class Report(Base):
     __tablename__ = "report"
     # foreign key
-    eventid: Mapped[int] = mapped_column("eventId", ForeignKey("event.eventid"), primary_key=True)
+    eventid: Mapped[int] = mapped_column("eventid", ForeignKey("event.eventid"), primary_key=True)
     # foreign key
     responderid: Mapped[int] = mapped_column("responderid", ForeignKey("users.userid"), primary_key=True)
     shortdescription: Mapped[str] = mapped_column("shortdescription", VARCHAR(150))

@@ -161,8 +161,8 @@ def get_userinfo():
             "role": current_user.role,
             "email": current_user.email,
             "name": responderinfo.name,
-            "phonenumber": userinfo.phonenumber,
-            "type": responderinfo.type,
+            "phonenumber": responderinfo.phonenumber,
+            "type": responderinfo.respondertype,
             "address": responderinfo.address
         }
         return jsonify(info)
@@ -495,20 +495,19 @@ def event(eventid):
 
         if event.status == EVENT_STATUS[EventStatus.RESOLVED.value]:
             # fetch report info
+            report = db_session.query(Report).filter(Report.eventid == event.eventid).first()
+            result["report"] = {
+                "shortdescription": report.shortdescription,
+                "createdat": report.createdat
+            }
+        elif event.status == EVENT_STATUS[EventStatus.FAILED.value]:
+            # fetch warning info
             warning = db_session.query(Warning).filter(Warning.eventid == event.eventid).first()
             result["warning"] = {
                 "warninglevel": warning.warninglevel,
                 "shortdescription": warning.shortdescription,
                 "createdat": warning.createdat
             }
-        elif event.status == EVENT_STATUS[EventStatus.FAILED.value]:
-            # fetch warning info
-            report = db_session.query(Report).filter(Report.eventid == event.eventid).first()
-            result["report"] = {
-                "shortdescription": report.shortdescription,
-                "createdat": report.createdat
-            }
-
         db_session.close()
         print(result)
         # return result
@@ -881,9 +880,9 @@ def event_results(eventid):
             db_session.add(new_report)
 
             # update the event status
-            db_session = get_db_session().query(Event). \
-                        filter(Event.eventid == eventid). \
-                        update({"status": EVENT_STATUS[EventStatus.RESOLVED.value]})
+            db_session.query(Event). \
+                filter(Event.eventid == eventid). \
+                update({"status": EVENT_STATUS[EventStatus.RESOLVED.value]})
 
             db_session.commit()
         except exc.SQLAlchemyError as e:
@@ -891,7 +890,7 @@ def event_results(eventid):
 
         return redirect(url_for("event", eventid=eventid))
 
-    else:
+    elif result_type == NotificationType.WARNING.value:
         # create new warning
         warninglevel = int(request.values["warninglevel"])
         if not check_warninglevel(warninglevel):
@@ -927,8 +926,10 @@ def event_results(eventid):
 
         # TODO: create notifications
         create_notifications(notification_info)
+    else:
+        return jsonify({"error": "no such result type"})
 
-        return redirect(url_for("event", eventid=eventid))
+    return redirect(url_for("event", eventid=eventid))
 
 @app.route("/respond_record/<int:offset>", methods=["GET"])
 def respond_record(offset):
