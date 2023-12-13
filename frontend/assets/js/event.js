@@ -4,7 +4,6 @@ fetch('/userinfo', {
 })
 .then(response => response.json())
 .then(function(data) {
-    const responderid = {{ result['responderid'] }};
     if (data.role === 'user') {
         document.getElementById('report').style.display = 'block';
     } else {
@@ -17,7 +16,7 @@ fetch('/userinfo', {
             const animalEntries = document.querySelectorAll('.AnimalEntry');
             
             animalEntries.forEach((entry, index) => {
-                const animal = {{ animallist[index] | tojson }};
+                const animal = {{ animallist['index'] | tojson }};
                 const selectElement = entry.querySelector('.placementSelect');
                 selectElement.innerHTML = '';
 
@@ -33,8 +32,11 @@ fetch('/userinfo', {
             });
         });
 
-        if(data.userid == responderid) {
+        const responderid = {{ result['responderid'] }};
+        console.log(responderid);
+        if(data.responderid == responderid) {
             document.getElementById('closeBtn').style.display = 'none';
+            document.getElementById('acceptBtn').style.display = 'none';
             document.getElementById('editZone').style.display = 'block';
         }
     }

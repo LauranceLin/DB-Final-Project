@@ -1,48 +1,48 @@
 const taipeiDistricts = [
-    { value: 'Zhongzheng', textContent: '中正區' },
-    { value: 'Datong', textContent: '大同區' },
-    { value: 'Zhongshan', textContent: '中山區' },
-    { value: 'Songshan', textContent: '松山區' },
-    { value: 'Daan', textContent: '大安區' },
-    { value: 'Wanhua', textContent: '萬華區' },
-    { value: 'Xinyi', textContent: '信義區' },
-    { value: 'Shilin', textContent: '士林區' },
-    { value: 'Beitou', textContent: '北投區' },
-    { value: 'Neihu', textContent: '內湖區' },
-    { value: 'Nangang', textContent: '南港區' },
-    { value: 'Wenshan', textContent: '文山區' }
+    { value: 0, textContent: '中正區' },
+    { value: 1, textContent: '大同區' },
+    { value: 2, textContent: '中山區' },
+    { value: 3, textContent: '松山區' },
+    { value: 4, textContent: '大安區' },
+    { value: 5, textContent: '萬華區' },
+    { value: 6, textContent: '信義區' },
+    { value: 7, textContent: '士林區' },
+    { value: 8, textContent: '北投區' },
+    { value: 9, textContent: '內湖區' },
+    { value: 10, textContent: '南港區' },
+    { value: 11, textContent: '文山區' }
 ];
 
 const newTaipeiDistricts = [
-    { value: 'Wanli', textContent: '萬里區' },
-    { value: 'Jinshan', textContent: '金山區' },
-    { value: 'Banqiao', textContent: '板橋區' },
-    { value: 'Xizhi', textContent: '汐止區' },
-    { value: 'Shenkeng', textContent: '深坑區' },
-    { value: 'Shiding', textContent: '石碇區' },
-    { value: 'Ruifang', textContent: '瑞芳區' },
-    { value: 'Pingxi', textContent: '平溪區' },
-    { value: 'Shuangxi', textContent: '雙溪區' },
-    { value: 'Gongliao', textContent: '貢寮區' },
-    { value: 'Xindian', textContent: '新店區' },
-    { value: 'Pinglin', textContent: '坪林區' },
-    { value: 'Wulai', textContent: '烏來區' },
-    { value: 'Yonghe', textContent: '永和區' },
-    { value: 'Zhonghe', textContent: '中和區' },
-    { value: 'Tucheng', textContent: '土城區' },
-    { value: 'Sanxia', textContent: '三峽區' },
-    { value: 'Shulin', textContent: '樹林區' },
-    { value: 'Yingge', textContent: '鶯歌區' },
-    { value: 'Sanchong', textContent: '三重區' },
-    { value: 'Xinzhuang', textContent: '新莊區' },
-    { value: 'Taishan', textContent: '泰山區' },
-    { value: 'Linkou', textContent: '林口區' },
-    { value: 'Luzhou', textContent: '蘆洲區' },
-    { value: 'Wugu', textContent: '五股區' },
-    { value: 'Bali', textContent: '八里區' },
-    { value: 'Tamsui', textContent: '淡水區' },
-    { value: 'Sanzhi', textContent: '三芝區' },
-    { value: 'Shimen', textContent: '石門區' }
+    { value: 0, textContent: '萬里區' },
+    { value: 1, textContent: '金山區' },
+    { value: 2, textContent: '板橋區' },
+    { value: 3, textContent: '汐止區' },
+    { value: 4, textContent: '深坑區' },
+    { value: 5, textContent: '石碇區' },
+    { value: 6, textContent: '瑞芳區' },
+    { value: 7, textContent: '平溪區' },
+    { value: 8, textContent: '雙溪區' },
+    { value: 9, textContent: '貢寮區' },
+    { value: 10, textContent: '新店區' },
+    { value: 11, textContent: '坪林區' },
+    { value: 12, textContent: '烏來區' },
+    { value: 13, textContent: '永和區' },
+    { value: 14, textContent: '中和區' },
+    { value: 15, textContent: '土城區' },
+    { value: 16, textContent: '三峽區' },
+    { value: 17, textContent: '樹林區' },
+    { value: 18, textContent: '鶯歌區' },
+    { value: 19, textContent: '三重區' },
+    { value: 20, textContent: '新莊區' },
+    { value: 21, textContent: '泰山區' },
+    { value: 22, textContent: '林口區' },
+    { value: 23, textContent: '蘆洲區' },
+    { value: 24, textContent: '五股區' },
+    { value: 25, textContent: '八里區' },
+    { value: 26, textContent: '淡水區' },
+    { value: 27, textContent: '三芝區' },
+    { value: 28, textContent: '石門區' }
 ];
 
 const citySelect = document.getElementById('citySelect');
@@ -83,8 +83,9 @@ addAnimalButton.addEventListener('click', function() {
     var animalEntry = document.createElement('div');
 
     var select = document.createElement('select');
-    select.name = 'eventanimals[' + i + '][animaltype]'; 
-    var options = ["狗", "貓", "鳥", "蛇", "鹿", "猴子", "魚", "熊", "其他"]; 
+    // select.name = 'eventanimals[' + i + '][animaltype]';
+    select.name = 'animaltype'
+    var options = ["狗", "貓", "鳥", "蛇", "鹿", "猴子", "魚", "熊", "其他"];
     for (var j = 0; j < options.length; j++) {
         var option = document.createElement('option');
         option.value = j;
@@ -94,7 +95,8 @@ addAnimalButton.addEventListener('click', function() {
 
     var input = document.createElement('input');
     input.type = 'text';
-    input.name = 'eventanimals[' + i + '][animaldescription]';
+    // input.name = 'eventanimals[' + i + '][animaldescription]';
+    input.name = 'animaldescription'
     input.placeholder = '動物描述';
 
     animalEntry.appendChild(select);
@@ -108,10 +110,10 @@ function resetForm() {
     document.getElementById("citySelect").selectedIndex = 0;
     document.getElementById("districtSelect").selectedIndex = 0;
     document.getElementById("roadInput").value = "";
-    
+
     var animalContainer = document.getElementById("animalContainer");
-    animalContainer.innerHTML = ""; 
-    
+    animalContainer.innerHTML = "";
+
     document.getElementById("eventTypeSelect").selectedIndex = 0;
     document.getElementById("descriptionInput").value = "";
     document.getElementById("imageUrlInput").value = "";

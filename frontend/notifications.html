@@ -5,40 +5,40 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title> Homepage </title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="/assets/css/main.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='assets/css/main.css') }}" rel="stylesheet">
 </head>
 <body>
 
   <!-- Navbar -->
   <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <div class="container-fluid">
-      <a class="navbar-brand" href="notifications/0"> FurAlert! </a>
+      <a class="navbar-brand" href="{{url_for('notifications', offset=0)}}"> FurAlert! </a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav">
           <li class="nav-item">
-            <a class="nav-link" href="/reported_events/0"> All Events</a>
+            <a class="nav-link" href="{{ url_for('reported_events', offset=0) }}"> All Events</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link active" aria-current="page" href="/frontend/notifications/0"> Notifications </a>
+            <a class="nav-link active" aria-current="page" href="{{url_for('notifications', offset=0)}}"> Notifications </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="/addevent.html" style="display: none;"> Create Event </a>
+            <a class="nav-link" id="create-event" href="{{ url_for('add_event') }}" style="display: none;"> Create Event </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="/subscription/0"> My Subscription </a>
+            <a class="nav-link" href="{{ url_for('subscription', offset=0) }}"> My Subscription </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="/reportrecord/0" style="display: none;"> Report Record </a>
+            <a class="nav-link" id="report-record" href="{{ url_for('reportrecord', offset=0) }}" style="display: none;"> Report Record </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="/respond_record/0" style="display: none;"> Respond Record </a>
+            <a class="nav-link" id="respond-record" href="{{ url_for('respond_record', offset=0) }}" style="display: none;"> Respond Record </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#profileModal">
-              <img src="images/icon.png" alt="Icon" width="30" height="30">
+              <img src="{{ url_for('static', filename='images/icon.png')}}" alt="Icon" width="30" height="30">
             </a>
           </li>
         </ul>
@@ -47,7 +47,7 @@
   </nav>
 
   <!-- Profile Modal -->
-  <div class="modal" id="profileModal" tabindex="-1"> 
+  <div class="modal" id="profileModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
@@ -110,7 +110,7 @@
           <div>
               <p>
                   &emsp;&emsp;&emsp;&emsp;&emsp; Published at {{ notification['createdat'] }} Status {{ notification['status'] }}
-                  <a href="/event/{{ notification['eventid'] }}"> Read more &raquo; </a>
+                  <a href="{{url_for('event', eventid=notification['eventid']) }}"> Read more &raquo; </a>
               </p>
           </div>
       </div>
@@ -119,15 +119,15 @@
 
       <!-- Pagination -->
       <div class="pagination justify-content-center">
-        <a href="{{ url_for('notifications', offset = offset - 1) }}" {% if offset == 0 %} class="disabled" {% endif %} {% if offset == 0 %} disabled {% endif %}> 上一頁 </a>
+        <a {% if offset == 0 %} href="#" {% else %} href="{{ url_for('notifications', offset = offset - 1) }}" {% endif %}> 上一頁 </a>
         <span> Page {{ offset + 1 }} </span>
-        <a href="{{ url_for('notifications', offset = offset + 1) }}" {% if no_more_data %} class="disabled" {% endif %} {% if no_more_data %} disabled {% endif %}> 下一頁 </a>
+        <a {% if offset == 0 %} href="#" {% else %} href="{{ url_for('notifications', offset = offset + 1) }}" {% endif %}> 下一頁 </a>
       </div>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="/assets/js/main.js"></script>
-  
+  <script src="{{ url_for('static', filename='assets/js/main.js') }}"></script>
+
 </body>
 </html>
