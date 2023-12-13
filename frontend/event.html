@@ -86,8 +86,8 @@
                   <div class="col">
                       <select class="form-select" id="citySelect" name="city" required disabled>
                           <option value="" selected disabled> 選擇城市 </option>
-                          <option value="0" {% if result['city'] == 0 %} selected {% endif %}> 臺北市 </option>
-                          <option value="1" {% if result['city'] == 1 %} selected {% endif %}> 新北市 </option>
+                          <option value="0" {% if result['city'] == '台北市' %} selected {% endif %}> 臺北市 </option>
+                          <option value="1" {% if result['city'] == '新北市' %} selected {% endif %}> 新北市 </option>
                       </select>
                   </div>
               </div>
@@ -96,49 +96,49 @@
                   <div class="col">
                       <select class="form-select" id="districtSelect" name="district" required disabled>
                           <option value="" selected disabled> 選擇行政區 </option>
-                          {% if result['city'] == '0' %}
-                            <option value="Zhongzheng" {% if result['district'] == 'Zhongzheng' %} selected {% endif %}> 中正區 </option>
-                            <option value="Datong" {% if result['district'] == 'Datong' %} selected {% endif %}> 大同區 </option>
-                            <option value="Zhongshan" {% if result['district'] == 'Zhongshan' %} selected {% endif %}> 中山區 </option>
-                            <option value="Songshan" {% if result['district'] == 'Songshan' %} selected {% endif %}> 松山區 </option>
-                            <option value="Daan" {% if result['district'] == 'Daan' %} selected {% endif %}> 大安區 </option>
-                            <option value="Wanhua" {% if result['district'] == 'Wanhua' %} selected {% endif %}> 萬華區 </option>
-                            <option value="Xinyi" {% if result['district'] == 'Xinyi' %} selected {% endif %}> 信義區 </option>
-                            <option value="Shilin" {% if result['district'] == 'Shilin' %} selected {% endif %}> 士林區 </option>
-                            <option value="Beitou" {% if result['district'] == 'Beitou' %} selected {% endif %}> 北投區 </option>
-                            <option value="Neihu" {% if result['district'] == 'Neihu' %} selected {% endif %}> 內湖區 </option>
-                            <option value="Nangang" {% if result['district'] == 'Nangang' %} selected {% endif %}> 南港區 </option>
-                            <option value="Wenshan" {% if result['district'] == 'Wenshan' %} selected {% endif %}> 文山區 </option>
-                          {% elif result['city'] == '1' %}
-                            <option value="Wanli" {% if result['district'] == 'Wanli' %} selected {% endif %}> 萬里區 </option>
-                            <option value="Jinshan" {% if result['district'] == 'Jinshan' %} selected {% endif %}> 金山區 </option>
-                            <option value="Banqiao" {% if result['district'] == 'Banqiao' %} selected {% endif %}> 板橋區 </option>
-                            <option value="Xizhi" {% if result['district'] == 'Xizhi' %} selected {% endif %}> 汐止區 </option>
-                            <option value="Shenkeng" {% if result['district'] == 'Shenkeng' %} selected {% endif %}> 深坑區 </option>
-                            <option value="Shiding" {% if result['district'] == 'Shiding' %} selected {% endif %}> 石碇區 </option>
-                            <option value="Ruifang" {% if result['district'] == 'Ruifang' %} selected {% endif %}> 瑞芳區 </option>
-                            <option value="Pingxi" {% if result['district'] == 'Pingxi' %} selected {% endif %}> 平溪區 </option>
-                            <option value="Shuangxi" {% if result['district'] == 'Shuangxi' %} selected {% endif %}> 雙溪區 </option>
-                            <option value="Gongliao" {% if result['district'] == 'Gongliao' %} selected {% endif %}> 貢寮區 </option>
-                            <option value="Xindian" {% if result['district'] == 'Xindian' %} selected {% endif %}> 新店區 </option>
-                            <option value="Pinglin" {% if result['district'] == 'Pinglin' %} selected {% endif %}> 坪林區 </option>
-                            <option value="Wulai" {% if result['district'] == 'Wulai' %} selected {% endif %}> 烏來區 </option>
-                            <option value="Yonghe" {% if result['district'] == 'Yonghe' %} selected {% endif %}> 永和區 </option>
-                            <option value="Zhonghe" {% if result['district'] == 'Zhonghe' %} selected {% endif %}> 中和區 </option>
-                            <option value="Tucheng" {% if result['district'] == 'Tucheng' %} selected {% endif %}> 土城區 </option>
-                            <option value="Sanxia" {% if result['district'] == 'Sanxia' %} selected {% endif %}> 三峽區 </option>
-                            <option value="Shulin" {% if result['district'] == 'Shulin' %} selected {% endif %}> 樹林區 </option>
-                            <option value="Yingge" {% if result['district'] == 'Yingge' %} selected {% endif %}> 鶯歌區 </option>
-                            <option value="Sanchong" {% if result['district'] == 'Sanchong' %} selected {% endif %}> 三重區 </option>
-                            <option value="Xinzhuang" {% if result['district'] == 'Xinzhuang' %} selected {% endif %}> 新莊區 </option>
-                            <option value="Taishan" {% if result['district'] == 'Taishan' %} selected {% endif %}> 泰山區 </option>
-                            <option value="Linkou" {% if result['district'] == 'Linkou' %} selected {% endif %}> 林口區 </option>
-                            <option value="Luzhou" {% if result['district'] == 'Luzhou' %} selected {% endif %}> 蘆洲區 </option>
-                            <option value="Wugu" {% if result['district'] == 'Wugu' %} selected {% endif %}> 五股區 </option>
-                            <option value="Bali" {% if result['district'] == 'Bali' %} selected {% endif %}> 八里區 </option>
-                            <option value="Tamsui" {% if result['district'] == 'Tamsui' %} selected {% endif %}> 淡水區 </option>
-                            <option value="Sanzhi" {% if result['district'] == 'Sanzhi' %} selected {% endif %}> 三芝區 </option>
-                            <option value="Shimen" {% if result['district'] == 'Shimen' %} selected {% endif %}> 石門區 </option>
+                          {% if result['city'] == '台北市' %}
+                            <option value="中正區" {% if result['district'] == '中正區' %} selected {% endif %}> 中正區 </option>
+                            <option value="大同區" {% if result['district'] == '大同區' %} selected {% endif %}> 大同區 </option>
+                            <option value="中山區" {% if result['district'] == '中山區' %} selected {% endif %}> 中山區 </option>
+                            <option value="大安區" {% if result['district'] == '松山區' %} selected {% endif %}> 松山區 </option>
+                            <option value="大安區" {% if result['district'] == '大安區' %} selected {% endif %}> 大安區 </option>
+                            <option value="萬華區" {% if result['district'] == '萬華區' %} selected {% endif %}> 萬華區 </option>
+                            <option value="信義區" {% if result['district'] == '信義區' %} selected {% endif %}> 信義區 </option>
+                            <option value="士林區" {% if result['district'] == '士林區' %} selected {% endif %}> 士林區 </option>
+                            <option value="北投區" {% if result['district'] == '北投區' %} selected {% endif %}> 北投區 </option>
+                            <option value="內湖區" {% if result['district'] == '內湖區' %} selected {% endif %}> 內湖區 </option>
+                            <option value="南港區" {% if result['district'] == '南港區' %} selected {% endif %}> 南港區 </option>
+                            <option value="文山區" {% if result['district'] == '文山區' %} selected {% endif %}> 文山區 </option>
+                          {% elif result['city'] == '新北市' %}
+                            <option value="萬里區" {% if result['district'] == '萬里區' %} selected {% endif %}> 萬里區 </option>
+                            <option value="金山區" {% if result['district'] == '金山區' %} selected {% endif %}> 金山區 </option>
+                            <option value="板橋區" {% if result['district'] == '板橋區' %} selected {% endif %}> 板橋區 </option>
+                            <option value="汐止區" {% if result['district'] == '汐止區' %} selected {% endif %}> 汐止區 </option>
+                            <option value="深坑區" {% if result['district'] == '深坑區' %} selected {% endif %}> 深坑區 </option>
+                            <option value="石碇區" {% if result['district'] == '石碇區' %} selected {% endif %}> 石碇區 </option>
+                            <option value="瑞芳區" {% if result['district'] == '瑞芳區' %} selected {% endif %}> 瑞芳區 </option>
+                            <option value="平溪區" {% if result['district'] == '平溪區' %} selected {% endif %}> 平溪區 </option>
+                            <option value="雙溪區" {% if result['district'] == '雙溪區' %} selected {% endif %}> 雙溪區 </option>
+                            <option value="貢寮區" {% if result['district'] == '貢寮區' %} selected {% endif %}> 貢寮區 </option>
+                            <option value="新店區" {% if result['district'] == '新店區' %} selected {% endif %}> 新店區 </option>
+                            <option value="坪林區" {% if result['district'] == '坪林區' %} selected {% endif %}> 坪林區 </option>
+                            <option value="烏來區" {% if result['district'] == '烏來區' %} selected {% endif %}> 烏來區 </option>
+                            <option value="永和區" {% if result['district'] == '永和區' %} selected {% endif %}> 永和區 </option>
+                            <option value="中和區" {% if result['district'] == '中和區' %} selected {% endif %}> 中和區 </option>
+                            <option value="土城區" {% if result['district'] == '土城區' %} selected {% endif %}> 土城區 </option>
+                            <option value="三峽區" {% if result['district'] == '三峽區' %} selected {% endif %}> 三峽區 </option>
+                            <option value="樹林區" {% if result['district'] == '樹林區' %} selected {% endif %}> 樹林區 </option>
+                            <option value="鶯歌區" {% if result['district'] == '鶯歌區' %} selected {% endif %}> 鶯歌區 </option>
+                            <option value="三重區" {% if result['district'] == '三重區' %} selected {% endif %}> 三重區 </option>
+                            <option value="新莊區" {% if result['district'] == '新莊區' %} selected {% endif %}> 新莊區 </option>
+                            <option value="泰山區" {% if result['district'] == '泰山區' %} selected {% endif %}> 泰山區 </option>
+                            <option value="林口區" {% if result['district'] == '林口區' %} selected {% endif %}> 林口區 </option>
+                            <option value="蘆洲區" {% if result['district'] == '蘆洲區' %} selected {% endif %}> 蘆洲區 </option>
+                            <option value="五股區" {% if result['district'] == '五股區' %} selected {% endif %}> 五股區 </option>
+                            <option value="八里區" {% if result['district'] == '八里區' %} selected {% endif %}> 八里區 </option>
+                            <option value="淡水區" {% if result['district'] == '淡水區' %} selected {% endif %}> 淡水區 </option>
+                            <option value="三芝區" {% if result['district'] == '三芝區' %} selected {% endif %}> 三芝區 </option>
+                            <option value="石門區" {% if result['district'] == '石門區' %} selected {% endif %}> 石門區 </option>
                         {% endif %}
                       </select>
                   </div>
@@ -153,10 +153,10 @@
                 <label for="citySelect" class="col-auto col-form-label"> Animal </label>
                 <div class="col">
                     <div id="animalContainer">
-                      {% for animal in animallist %}
+                      {% for animal in result['animals'] %}
                       <div class="AnimalEntry">
                           <select name="animals[{{ loop.index0 }}][type]" >
-                              {% set options = ["狗", "貓", "鳥", "蛇", "鹿", "猴子", "魚", "熊", "其他"] %}
+                              {% set options = ["Dog", "Cat", "Bird", "Snake", "Deer", "Monkey", "Fish", "Bear", "Other"] %}
                               {% for option in options %}
                                   <option value="{{ loop.index0 }}" {% if loop.index0 == animal['type'] %} selected {% endif %}>{{ option }}</option>
                               {% endfor %}
@@ -175,13 +175,13 @@
                   <div class="col">
                       <select class="form-select" id="eventTypeSelect" name="eventtype" required disabled>
                         <option value="" selected disabled> 選擇事件種類 </option>
-                        <option value="0" {% if result['eventtype'] == '0' %} selected {% endif %}> 動物路殺 </option>
-                        <option value="1" {% if result['eventtype'] == '1' %} selected {% endif %}> 動物阻礙交通 </option>
-                        <option value="2" {% if result['eventtype'] == '2' %} selected {% endif %}> 流浪動物 </option>
-                        <option value="3" {% if result['eventtype'] == '3' %} selected {% endif %}> 動物傷人 </option>
-                        <option value="4" {% if result['eventtype'] == '4' %} selected {% endif %}> 虐待動物 </option>
-                        <option value="5" {% if result['eventtype'] == '5' %} selected {% endif %}> 危險動物目擊 </option>
-                        <option value="6" {% if result['eventtype'] == '6' %} selected {% endif %}> 其他 </option>
+                        <option value="Roadkill" {% if result['eventtype'] == 'Roadkill' %} selected {% endif %}> Roadkill </option>
+                        <option value="AnimalBlockTraffic" {% if result['eventtype'] == 'AnimalBlockTraffic' %} selected {% endif %}> 動物阻礙交通 </option>
+                        <option value="StrayAnimal" {% if result['eventtype'] == 'StrayAnimal' %} selected {% endif %}> 流浪動物 </option>
+                        <option value="AnimalAttack" {% if result['eventtype'] == 'AnimalAttack' %} selected {% endif %}> 動物傷人 </option>
+                        <option value="AnimalAbuse" {% if result['eventtype'] == 'AnimalAbuse' %} selected {% endif %}> 虐待動物 </option>
+                        <option value="DangerousWildlifeSighting" {% if result['eventtype'] == 'DangerousWildlifeSighting' %} selected {% endif %}> 危險動物目擊 </option>
+                        <option value="Other" {% if result['eventtype'] == 'Other' %} selected {% endif %}> 其他 </option>
                       </select>
                   </div>
               </div>
@@ -209,12 +209,12 @@
                   <label for="eventStatusSelect" class="col-auto col-form-label"> Event Status </label>
                   <div class="col">
                     <select class="form-select" id="eventStatusSelect" name="status" required disabled>
-                      <option value="" selected disabled> 選擇事件種類 </option>
-                      <option value="0" {% if result['status'] == '0' %} selected {% endif %}> Unsolved </option>
-                      <option value="1" {% if result['status'] == '1' %} selected {% endif %}> Resolved </option>
-                      <option value="2" {% if result['status'] == '2' %} selected {% endif %}> Ongoing </option>
-                      <option value="3" {% if result['status'] == '3' %} selected {% endif %}> False Alarm </option>
-                      <option value="4" {% if result['status'] == '4' %} selected {% endif %}> Failed </option>
+                      <option value="" selected disabled> 選擇事件狀態 </option>
+                      <option value="Unresolved" {% if result['status'] == 'Unresolved' %} selected {% endif %}> Unsolved </option>
+                      <option value="Resolved" {% if result['status'] == 'Resolved' %} selected {% endif %}> Resolved </option>
+                      <option value="Ongoing" {% if result['status'] == 'Ongoing' %} selected {% endif %}> Ongoing </option>
+                      <option value="FalseAlarm" {% if result['status'] == 'FalseAlarm' %} selected {% endif %}> False Alarm </option>
+                      <option value="Failed" {% if result['status'] == 'Failed' %} selected {% endif %}> Failed </option>
                     </select>
                 </div>
               </div>
@@ -267,5 +267,8 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="{{ url_for('static', filename='assets/js/main.js') }}"></script>
   <script src="{{ url_for('static', filename='assets/js/event.js') }}"></script>
+  <script>
+    console.log("{{result['animals'][0][type]}}");
+  </script>
 </body>
 </html>

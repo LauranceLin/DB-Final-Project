@@ -16,7 +16,7 @@ fetch('/userinfo', {
             const animalEntries = document.querySelectorAll('.AnimalEntry');
             
             animalEntries.forEach((entry, index) => {
-                const animal = {{ animallist['index'] | tojson }};
+                const animal = "{{ result['animals']['index'] | tojson }}";
                 const selectElement = entry.querySelector('.placementSelect');
                 selectElement.innerHTML = '';
 
@@ -32,8 +32,7 @@ fetch('/userinfo', {
             });
         });
 
-        const responderid = {{ result['responderid'] }};
-        console.log(responderid);
+        const responderid = "{{ result['responderid'] }}"; 
         if(data.responderid == responderid) {
             document.getElementById('closeBtn').style.display = 'none';
             document.getElementById('acceptBtn').style.display = 'none';
@@ -122,14 +121,14 @@ citySelect.addEventListener('change', function () {
     if (citySelect.value === '0') {
         taipeiDistricts.forEach(district => {
             const option = document.createElement('option');
-            option.value = district.value;
+            option.value = district.textContent;
             option.textContent = district.textContent;
             districtSelect.appendChild(option);
         });
     } else if (citySelect.value === '1') {
         newTaipeiDistricts.forEach(district => {
             const option = document.createElement('option');
-            option.value = district.value;
+            option.value = district.textContent;
             option.textContent = district.textContent;
             districtSelect.appendChild(option);
         });
