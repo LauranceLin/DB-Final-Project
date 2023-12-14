@@ -60,14 +60,14 @@ citySelect.addEventListener('change', function () {
     if (citySelect.value === '0') {
         taipeiDistricts.forEach(district => {
             const option = document.createElement('option');
-            option.value = district.value;
+            option.value = district.textContent;
             option.textContent = district.textContent;
             districtSelect.appendChild(option);
         });
     } else if (citySelect.value === '1') {
         newTaipeiDistricts.forEach(district => {
             const option = document.createElement('option');
-            option.value = district.value;
+            option.value = district.textContent;
             option.textContent = district.textContent;
             districtSelect.appendChild(option);
         });

@@ -4,27 +4,26 @@ fetch('/userinfo', {
 })
 .then(response => response.json())
 .then(function(data) {
-    const responderid = {{ result['responderid'] }};
     if (data.role === 'user') {
         document.getElementById('report').style.display = 'block';
     } else {
         document.getElementById('report').style.display = 'none';
         document.getElementById('acceptBtn').style.display = 'block';
-
+        
         fetch('/placementinfo')
         .then(response => response.json())
         .then(function(placementData){
             const animalEntries = document.querySelectorAll('.AnimalEntry');
             
-            animalEntries.forEach((entry, index) => {
-                const animal = {{ animallist[index] | tojson }};
+            animalEntries.forEach((entry) => {
                 const selectElement = entry.querySelector('.placementSelect');
                 selectElement.innerHTML = '';
+                const dataPlacement = entry.getAttribute('data-placement');
 
                 for (const placement of placementData.placement_list) {
                     const option = document.createElement('option');
                     option.setAttribute('value', placement.placementid);
-                    if (placement.placementname === animal['placementname']) {
+                    if (placement.placementname === dataPlacement) {
                         option.setAttribute('selected', true);
                     }
                     option.textContent = placement.placementname;
@@ -33,8 +32,10 @@ fetch('/userinfo', {
             });
         });
 
+        const responderid = document.getElementById('responderInput').getAttribute('data-responderid'); 
         if(data.userid == responderid) {
             document.getElementById('closeBtn').style.display = 'none';
+            document.getElementById('acceptBtn').style.display = 'none';
             document.getElementById('editZone').style.display = 'block';
         }
     }
@@ -120,14 +121,14 @@ citySelect.addEventListener('change', function () {
     if (citySelect.value === '0') {
         taipeiDistricts.forEach(district => {
             const option = document.createElement('option');
-            option.value = district.value;
+            option.value = district.textContent;
             option.textContent = district.textContent;
             districtSelect.appendChild(option);
         });
     } else if (citySelect.value === '1') {
         newTaipeiDistricts.forEach(district => {
             const option = document.createElement('option');
-            option.value = district.value;
+            option.value = district.textContent;
             option.textContent = district.textContent;
             districtSelect.appendChild(option);
         });

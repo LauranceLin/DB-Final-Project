@@ -25,16 +25,16 @@
             <a class="nav-link" href="{{url_for('notifications', offset=0)}}"> Notifications </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link active" aria-current="page" href="{{ url_for('add_event') }}"> Create Event </a>
+            <a class="nav-link active" id="create-event" aria-current="page" href="{{ url_for('add_event') }}"> Create Event </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('subscription', offset=0) }}"> My Subscription </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('reportrecord', offset=0) }}"> Report Record </a>
+            <a class="nav-link" id="report-record" href="{{ url_for('reportrecord', offset=0) }}"> Report Record </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('respond_record', offset=0) }}" style="display: none;"> Respond Record </a>
+            <a class="nav-link" id="respond-record" href="{{ url_for('respond_record', offset=0) }}" style="display: none;"> Respond Record </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#profileModal">
@@ -84,8 +84,8 @@
                 <div class="col">
                     <select class="form-select" id="citySelect" name="city" required>
                         <option value="" selected disabled> 選擇城市 </option>
-                        <option value="0"> 臺北市 </option>
-                        <option value="1"> 新北市 </option>
+                        <option value="台北市"> 臺北市 </option>
+                        <option value="新北市"> 新北市 </option>
                     </select>
                 </div>
             </div>

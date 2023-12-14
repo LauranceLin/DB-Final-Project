@@ -28,16 +28,16 @@
             <a class="nav-link" href="{{ url_for('notifications', offset=0) }}"> Notifications </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('add_event') }}" style="display: none;"> Create Event </a>
+            <a class="nav-link" id="create-event" href="{{ url_for('add_event') }}" style="display: none;"> Create Event </a>
           </li>
           <li class="nav-item">
             <a class="nav-link active" aria-current="page" href="{{ url_for('subscription', offset=0) }}"> My Subscription </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('reportrecord', offset=0) }}" style="display: none;"> Report Record </a>
+            <a class="nav-link" id="report-record" href="{{ url_for('reportrecord', offset=0) }}" style="display: none;"> Report Record </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('respond_record', offset=0) }}" style="display: none;"> Respond Record </a>
+            <a class="nav-link" id="respond-record" href="{{ url_for('respond_record', offset=0) }}" style="display: none;"> Respond Record </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#profileModal">
@@ -179,11 +179,9 @@
 
       <!-- Pagination -->
       <div class="pagination justify-content-center">
-        <a href="{{ url_for('subscription', offset = offset - 1) }}" {% if offset==0 %} class="disabled" {% endif %} {%
-          if offset==0 %} disabled {% endif %}> 上一頁 </a>
+        <a {% if offset == 0 %} href="#" {% else %} href="{{ url_for('notifications', offset = offset - 1) }}" {% endif %}> 上一頁 </a>
         <span> Page {{ offset + 1 }} </span>
-        <a href="{{ url_for('subscription', offset = offset + 1) }}" {% if no_more_data %} class="disabled" {% endif %}
-          {% if no_more_data %} disabled {% endif %}> 下一頁 </a>
+        <a {% if offset == 0 %} href="#" {% else %} href="{{ url_for('notifications', offset = offset + 1) }}" {% endif %}> 下一頁 </a>
       </div>
     </div>
   </div>

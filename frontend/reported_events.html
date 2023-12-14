@@ -25,16 +25,16 @@
             <a class="nav-link" href="{{url_for('notifications', offset=0)}}"> Notifications </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('add_event') }}" style="display: none;"> Create Event </a>
+            <a class="nav-link" id="create-event" href="{{ url_for('add_event') }}" style="display: none;"> Create Event </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('subscription', offset=0) }}"> My Subscription </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('reportrecord', offset=0) }}" style="display: none;"> Report Record </a>
+            <a class="nav-link" id="report-record" href="{{ url_for('reportrecord', offset=0) }}" style="display: none;"> Report Record </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('respond_record', offset=0) }}" style="display: none;"> Respond Record </a>
+            <a class="nav-link" id="respond-record" href="{{ url_for('respond_record', offset=0) }}" style="display: none;"> Respond Record </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#profileModal">
@@ -84,78 +84,78 @@
           <label for="locationSelect" class="form-label"> Location </label>
           <select class="form-select" id="locationSelect">
             <option value="" selected> All </option>
-            <option value="Zhongzheng"> 中正區 </option>
-            <option value="Datong"> 大同區 </option>
-            <option value="Zhongshan"> 中山區 </option>
-            <option value="Songshan"> 松山區 </option>
-            <option value="Daan"> 大安區 </option>
-            <option value="Wanhua"> 萬華區 </option>
-            <option value="Xinyi"> 信義區 </option>
-            <option value="Shilin"> 士林區 </option>
-            <option value="Beitou"> 北投區 </option>
-            <option value="Neihu"> 內湖區 </option>
-            <option value="Nangang"> 南港區 </option>
-            <option value="Wenshan"> 文山區 </option>
-            <option value="Wanli"> 萬里區 </option>
-            <option value="Jinshan"> 金山區 </option>
-            <option value="Banqiao"> 板橋區 </option>
-            <option value="Xizhi"> 汐止區 </option>
-            <option value="Shenkeng"> 深坑區 </option>
-            <option value="Shiding"> 石碇區 </option>
-            <option value="Ruifang"> 瑞芳區 </option>
-            <option value="Pingxi"> 平溪區 </option>
-            <option value="Shuangxi"> 雙溪區 </option>
-            <option value="Gongliao"> 貢寮區 </option>
-            <option value="Xindian"> 新店區 </option>
-            <option value="Pinglin"> 坪林區 </option>
-            <option value="Wulai"> 烏來區 </option>
-            <option value="Yonghe"> 永和區 </option>
-            <option value="Zhonghe"> 中和區 </option>
-            <option value="Tucheng"> 土城區 </option>
-            <option value="Sanxia"> 三峽區 </option>
-            <option value="Shulin"> 樹林區 </option>
-            <option value="Yingge"> 鶯歌區 </option>
-            <option value="Sanchong"> 三重區 </option>
-            <option value="Xinzhuang"> 新莊區 </option>
-            <option value="Taishan"> 泰山區 </option>
-            <option value="Linkou"> 林口區 </option>
-            <option value="Luzhou"> 蘆洲區 </option>
-            <option value="Wugu"> 五股區 </option>
-            <option value="Bali"> 八里區 </option>
-            <option value="Tamsui"> 淡水區 </option>
-            <option value="Sanzhi"> 三芝區 </option>
-            <option value="Shimen"> 石門區 </option>
+            <option value="中正區"> 中正區 </option>
+            <option value="大同區"> 大同區 </option>
+            <option value="中山區"> 中山區 </option>
+            <option value="松山區"> 松山區 </option>
+            <option value="大安區"> 大安區 </option>
+            <option value="萬華區"> 萬華區 </option>
+            <option value="信義區"> 信義區 </option>
+            <option value="士林區"> 士林區 </option>
+            <option value="北投區"> 北投區 </option>
+            <option value="內湖區"> 內湖區 </option>
+            <option value="南港區"> 南港區 </option>
+            <option value="文山區"> 文山區 </option>
+            <option value="萬里區"> 萬里區 </option>
+            <option value="金山區"> 金山區 </option>
+            <option value="板橋區"> 板橋區 </option>
+            <option value="汐止區"> 汐止區 </option>
+            <option value="深坑區"> 深坑區 </option>
+            <option value="石碇區"> 石碇區 </option>
+            <option value="瑞芳區"> 瑞芳區 </option>
+            <option value="平溪區"> 平溪區 </option>
+            <option value="雙溪區"> 雙溪區 </option>
+            <option value="貢寮區"> 貢寮區 </option>
+            <option value="新店區"> 新店區 </option>
+            <option value="坪林區"> 坪林區 </option>
+            <option value="烏來區"> 烏來區 </option>
+            <option value="永和區"> 永和區 </option>
+            <option value="中和區"> 中和區 </option>
+            <option value="土城區"> 土城區 </option>
+            <option value="三峽區"> 三峽區 </option>
+            <option value="樹林區"> 樹林區 </option>
+            <option value="鶯歌區"> 鶯歌區 </option>
+            <option value="三重區"> 三重區 </option>
+            <option value="新莊區"> 新莊區 </option>
+            <option value="泰山區"> 泰山區 </option>
+            <option value="林口區"> 林口區 </option>
+            <option value="蘆洲區"> 蘆洲區 </option>
+            <option value="五股區"> 五股區 </option>
+            <option value="八里區"> 八里區 </option>
+            <option value="淡水區"> 淡水區 </option>
+            <option value="三芝區"> 三芝區 </option>
+            <option value="石門區"> 石門區 </option>
           </select>
         </div>
         <div>
           <label for="animalSelect" class="form-label"> Animal </label>
           <select class="form-select" id="animalSelect">
             <option value="" selected> 所有 </option>
-            <option value="0"> 狗 </option>
-            <option value="1"> 貓 </option>
-            <option value="2"> 鳥 </option>
-            <option value="3"> 蛇 </option>
-            <option value="4"> 鹿 </option>
-            <option value="5"> 猴子 </option>
-            <option value="6"> 魚 </option>
-            <option value="7"> 熊 </option>
-            <option value="8"> 其他 </option>
+            <option value="Dog"> 狗 </option>
+            <option value="Cat"> 貓 </option>
+            <option value="Bird"> 鳥 </option>
+            <option value="Snake"> 蛇 </option>
+            <option value="Deer"> 鹿 </option>
+            <option value="Monkey"> 猴子 </option>
+            <option value="Fish"> 魚 </option>
+            <option value="Bear"> 熊 </option>
+            <option value="Other"> 其他 </option>
           </select>
         </div>
         <div>
           <label for="eventTypeSelect" class="form-label"> EventType </label>
           <select class="form-select" id="eventTypeSelect">
             <option value="" selected> 所有 </option>
-            <option value="0"> 動物路殺 </option>
-            <option value="1"> 動物阻礙交通 </option>
-            <option value="2"> 流浪動物 </option>
-            <option value="3"> 動物傷人 </option>
-            <option value="4"> 虐待動物 </option>
-            <option value="5"> 危險動物目擊 </option>
-            <option value="6"> 其他 </option>
+            <option value="RoadkillAccident"> 動物路殺 </option>
+            <option value="AnimalBlockTraffic"> 動物阻礙交通 </option>
+            <option value="StrayAnimal"> 流浪動物 </option>
+            <option value="AnimalAttack"> 動物傷人 </option>
+            <option value="AnimalAbuse"> 虐待動物 </option>
+            <option value="DangerousWildlifeSighting"> 危險動物目擊 </option>
+            <option value="Other"> 其他 </option>
           </select>
         </div>
-        <button type="submit" class="btn btn-primary"> Confirm </button>
+        <button class="btn btn-primary" id="confirmBtn"> Confirm </button>
       </form>
 
       <!-- Event list -->
@@ -187,15 +187,20 @@
 
         <!-- Pagination -->
         <div class="pagination justify-content-center">
-            <a href="{{ url_for('reported_events', offset = offset - 1) }}" {% if offset == 0 %} class="disabled" {% endif %} {% if offset == 0 %} disabled {% endif %}> 上一頁 </a>
-            <span> Page {{ offset + 1 }} </span>
-            <a href="{{ url_for('reported_events', offset = offset + 1) }}" {% if no_more_data %} class="disabled" {% endif %} {% if no_more_data %} disabled {% endif %}> 下一頁 </a>
+          <a {% if offset == 0 %} href="#" {% else %} href="{{ url_for('notifications', offset = offset - 1) }}" {% endif %}> 上一頁 </a>
+          <span> Page {{ offset + 1 }} </span>
+          <a {% if offset == 0 %} href="#" {% else %} href="{{ url_for('notifications', offset = offset + 1) }}" {% endif %}> 下一頁 </a>
         </div>
       </div>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<<<<<<< HEAD
   <script src="{{ url_for('static', filename='assets/js/main.js') }}"></script>ㄌ
+=======
+  <script src="{{ url_for('static', filename='assets/js/main.js') }}"></script>
+  <script src="{{ url_for('static', filename='assets/js/reported_events.js') }}"></script>
+>>>>>>> frontend
 </body>
 </html>
