@@ -496,18 +496,20 @@ def event(eventid):
         if event.status == EVENT_STATUS[EventStatus.RESOLVED.value]:
             # fetch report info
             report = db_session.query(Report).filter(Report.eventid == event.eventid).first()
-            result["report"] = {
-                "shortdescription": report.shortdescription,
-                "createdat": report.createdat
-            }
+            if report is not None:
+                result["report"] = {
+                    "shortdescription": report.shortdescription,
+                    "createdat": report.createdat
+                }
         elif event.status == EVENT_STATUS[EventStatus.FAILED.value]:
             # fetch warning info
             warning = db_session.query(Warning).filter(Warning.eventid == event.eventid).first()
-            result["warning"] = {
-                "warninglevel": warning.warninglevel,
-                "shortdescription": warning.shortdescription,
-                "createdat": warning.createdat
-            }
+            if warning is not None:
+                result["warning"] = {
+                    "warninglevel": warning.warninglevel,
+                    "shortdescription": warning.shortdescription,
+                    "createdat": warning.createdat
+                }
         db_session.close()
         print(result)
         # return result
