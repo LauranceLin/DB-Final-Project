@@ -9,21 +9,21 @@ fetch('/userinfo', {
     } else {
         document.getElementById('report').style.display = 'none';
         document.getElementById('acceptBtn').style.display = 'block';
-
+        
         fetch('/placementinfo')
         .then(response => response.json())
         .then(function(placementData){
             const animalEntries = document.querySelectorAll('.AnimalEntry');
             
-            animalEntries.forEach((entry, index) => {
-                const animal = "{{ result['animals']['index'] | tojson }}";
+            animalEntries.forEach((entry) => {
                 const selectElement = entry.querySelector('.placementSelect');
                 selectElement.innerHTML = '';
+                const dataPlacement = entry.getAttribute('data-placement');
 
                 for (const placement of placementData.placement_list) {
                     const option = document.createElement('option');
                     option.setAttribute('value', placement.placementid);
-                    if (placement.placementname === animal['placementname']) {
+                    if (placement.placementname === dataPlacement) {
                         option.setAttribute('selected', true);
                     }
                     option.textContent = placement.placementname;
@@ -32,8 +32,8 @@ fetch('/userinfo', {
             });
         });
 
-        const responderid = "{{ result['responderid'] }}"; 
-        if(data.responderid == responderid) {
+        const responderid = document.getElementById('responderInput').getAttribute('data-responderid'); 
+        if(data.userid == responderid) {
             document.getElementById('closeBtn').style.display = 'none';
             document.getElementById('acceptBtn').style.display = 'none';
             document.getElementById('editZone').style.display = 'block';
