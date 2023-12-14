@@ -189,20 +189,24 @@ def get_placementinfo():
 def notifications(offset):
     # TODO: Test the url parameter notificationtype
 
-    if 'notificationtype' in request.args:
-        notification_type = int(request.args.get('notificationtype'))
+    if 'type' in request.args:
+        notification_type = request.args.get('type')
 
         if not check_notificationtype(notification_type):
             return jsonify({"Error": "No such notificationtype"})
+    else:
+        notification_type = 'both'
 
+    if notification_type == 'event' or notification_type == 'warning':
+        notification_index = get_notification_index(notification_type)
         db_session = get_db_session()
         notified_events = db_session.query(Event) \
             .join(Notification, Notification.eventid == Event.eventid) \
             .filter(Notification.notifieduserid == current_user.userid) \
-            .filter(Notification.notificationtype == NOTIFICATION_TYPE[notification_type]) \
+            .filter(Notification.notificationtype == NOTIFICATION_TYPE[notification_index]) \
             .order_by(Notification.notificationtimestamp.desc()) \
             .offset(NUM_ITEMS_PER_PAGE*offset).limit(NUM_ITEMS_PER_PAGE).all()
-    else:
+    else: # both
         db_session = get_db_session()
         # get recent history notifications determined by offset
         notified_events = db_session.query(Event) \
@@ -213,24 +217,25 @@ def notifications(offset):
 
     event_list = []
 
-    for event in notified_events:
-        animals = db_session.query(Animal).filter(Animal.eventid == event.eventid).all()
+    if notified_events is not None:
+        for event in notified_events:
+            animals = db_session.query(Animal).filter(Animal.eventid == event.eventid).all()
 
-        animallist = [ animal.type for animal in animals]
+            animallist = [ animal.type for animal in animals]
 
-        e = {
-            "eventid": event.eventid,
-            "eventtype": event.eventtype,
-            "userid": event.userid,
-            "responderid": event.responderid,
-            "status": event.status,
-            "shortdescription": event.shortdescription,
-            "city": event.city,
-            "district": event.district,
-            "createdat": str(event.createdat),
-            "animals": animallist
-        }
-        event_list.append(e)
+            e = {
+                "eventid": event.eventid,
+                "eventtype": event.eventtype,
+                "userid": event.userid,
+                "responderid": event.responderid,
+                "status": event.status,
+                "shortdescription": event.shortdescription,
+                "city": event.city,
+                "district": event.district,
+                "createdat": str(event.createdat),
+                "animals": animallist
+            }
+            event_list.append(e)
 
     db_session.close()
     print(event_list)

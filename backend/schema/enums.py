@@ -113,10 +113,18 @@ def check_resulttype(type: int):
         return False
     return True
 
-def check_notificationtype(type: int):
-    if type < 0 or type >= NotificationType.NOTIFICATION_TYPE_LEN.value:
-        return False
-    return True
+def get_notification_index(type: str):
+    if type == 'event':
+        return 0
+    elif type == 'warning':
+        return 1
+    else:
+        return -1
+
+def check_notificationtype(type: str):
+    if type == 'event' or type == 'warning' or type == 'both':
+        return True
+    return False
 
 def check_eventstatus(status: int):
     if status < 0 or status >= EventStatus.EVENT_STATUS_LEN.value:
