@@ -154,15 +154,15 @@
                 <div class="col">
                     <div id="animalContainer">
                       {% for animal in result['animals'] %}
-                      <div class="AnimalEntry">
+                      <div class="AnimalEntry" data-placement="{{ animal['placement'] }}">
                           <select name="animals[{{ loop.index0 }}][type]" >
                               {% set options = ["Dog", "Cat", "Bird", "Snake", "Deer", "Monkey", "Fish", "Bear", "Other"] %}
                               {% for option in options %}
-                                  <option value="{{ loop.index0 }}" {% if loop.index0 == animal['type'] %} selected {% endif %}>{{ option }}</option>
+                                  <option value="{{ loop.index0 }}" {% if option == animal['type'] %} selected {% endif %}>{{ option }}</option>
                               {% endfor %}
                           </select>
-                          <select class="placementSelect" name="animals[{{ loop.index0 }}][placement]" disabled></select>
-                          <input type="text" class="animalDescriptionInput" name="animals[{{ loop.index0 }}][description]" placeholder="動物描述" value="{{ animal['description'] }}" disabled>
+                          <select class="placementSelect" disabled></select>
+                          <input type="text" class="animalDescriptionInput" placeholder="動物描述" value="{{ animal['description'] }}" disabled>
                       </div>
                       {% endfor %}
                     </div>
