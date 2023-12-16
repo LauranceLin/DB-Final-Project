@@ -35,20 +35,6 @@
           </li>
           <li class="nav-item">
             <a class="nav-link active" id="respond-record" aria-current="page" href="{{ url_for('respond_record', offset=0) }}"> Respond Record </a>
-            <a class="nav-link" href="/notifications/0"> Notifications </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="/addevent.html" style="display: none;"> Create Event </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="/subscription/0"> My Subscription </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" id="report-record" href="/reportrecord/0" style="display: none;"> Report Record </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link active"  aria-current="page" href="/respond_record/0"> Respond Record </a>
-          </li>
           <li class="nav-item">
             <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#profileModal">
               <img src="{{url_for('static', filename='images/icon.png')}}" alt="Icon" width="30" height="30">
@@ -110,7 +96,7 @@
             </div>
             <div class="event-details">
                 <p>
-                  &emsp;&emsp;&emsp;&emsp;&emsp; Published at {{ event['createdat] }} Status {{ event['status'] }}
+                  &emsp;&emsp;&emsp;&emsp;&emsp; Published at {{ event['createdat'] }} Status {{ event['status'] }}
                   <a href="{{url_for('event', eventid=event['eventid']) }}"> Read more &raquo; </a>
                 </p>
             </div>
@@ -123,9 +109,9 @@
 
         <!-- Pagination -->
         <div class="pagination justify-content-center">
-          <a {% if offset == 0 %} href="#" {% else %} href="{{ url_for('notifications', offset = offset - 1) }}" {% endif %}> 上一頁 </a>
+          <a {% if offset == 0 %} href="#" {% else %} href="{{ url_for('event_list', offset = offset - 1) }}" {% endif %}> 上一頁 </a>
           <span> Page {{ offset + 1 }} </span>
-          <a {% if offset == 0 %} href="#" {% else %} href="{{ url_for('notifications', offset = offset + 1) }}" {% endif %}> 下一頁 </a>
+          <a {% if offset == 0 %} href="#" {% else %} href="{{ url_for('event_list', offset = offset + 1) }}" {% endif %}> 下一頁 </a>
         </div>
       </div>
     </div>

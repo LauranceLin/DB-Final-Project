@@ -944,20 +944,51 @@ def respond_record(offset):
     if not is_responder():
         return redirect(url_for("login"))
 
-    # TODO: fetch all the events the responder responded to
+    db_session = get_db_session()
+    respond_record = db_session.query(Event) \
+        .filter(Event.responderid == current_user.userid) \
+        .order_by(Event.createdat.desc()) \
+        .offset(offset*NUM_ITEMS_PER_PAGE).limit(NUM_ITEMS_PER_PAGE).all()
+
+    event_list = []
+
+    if respond_record is not None:
+        for event in respond_record:
+            animals = db_session.query(Animal).filter(Animal.eventid == event.eventid).all()
+
+            animallist = [ animal.type for animal in animals]
+
+            e = {
+                "eventid": event.eventid,
+                "eventtype": event.eventtype,
+                "userid": event.userid,
+                "responderid": event.responderid,
+                "status": event.status,
+                "shortdescription": event.shortdescription,
+                "city": event.city,
+                "district": event.district,
+                "createdat": str(event.createdat),
+                "animals": animallist
+            }
+            event_list.append(e)
+
+    db_session.close()
+    print(event_list)
+
+    return render_template("respond_record.html", event_list=event_list, offset=offset)
 
 @app.route("/userlist/<int:offset>", methods=["GET"])
 @login_required
 def user_list(offset):
-    if is_admin():  
+    if is_admin():
         db_session = get_db_session()
-        
+
         all_user_query = db_session.query(UserInfo, Users) \
             .outerjoin(Users, Users.userid == UserInfo.userid) \
             .filter(Users.role == "user") \
             .order_by(UserInfo.userid) \
             .offset(NUM_ITEMS_PER_PAGE*offset).limit(NUM_ITEMS_PER_PAGE).all()
-        
+
         userlist = [
             {
                 "userid": user.UserInfo.userid,
@@ -1024,7 +1055,7 @@ def user_info(userid, offset):
             }
             for e in user_reportrecord_query
         ]
-        
+
         # todo: check frontend html and request
         return render_template(".html", user_information=user_information, report_record=report_record, userid=userid, offset=offset)
 
@@ -1032,11 +1063,11 @@ def user_info(userid, offset):
 @app.route("/banuser/<int:userid>", methods=["POST"])
 @login_required
 def ban_user(userid):
-    if is_admin(): 
+    if is_admin():
         db_session = get_db_session()
-   
+
         user = db_session.query(UserInfo).filter(UserInfo.userid == userid).with_for_update().first()
-        
+
         if user and user.status != "banned":
             user.status = "banned"
             db_session.commit()
@@ -1048,9 +1079,9 @@ def ban_user(userid):
 @app.route("/responderlist/<int:offset>", methods=["GET"])
 @login_required
 def responder_list(offset):
-    if is_admin(): 
+    if is_admin():
         db_session = get_db_session()
-       
+
         all_responder_query = db_session.query(ResponderInfo, Users) \
             .outerjoin(Users, Users.userid == ResponderInfo.responderid) \
             .filter(Users.role == "responder") \
@@ -1092,7 +1123,7 @@ def responder_info(responderid, offset):
             .filter(Event.responderid == responderid) \
             .order_by(Event.createdat.desc()) \
             .offset(offset*NUM_ITEMS_PER_PAGE).limit(NUM_ITEMS_PER_PAGE).all()
-        
+
         db_session.close()
 
         responder_information = [
@@ -1105,7 +1136,7 @@ def responder_info(responderid, offset):
             }
             for r in query_responder
         ]
-        
+
         respond_record = [
             {
                 "eventid": e.Event.eventid,
@@ -1121,7 +1152,7 @@ def responder_info(responderid, offset):
             }
             for e in respondrecord_query
         ]
-        
+
         # todo: check frontend html and request
         return render_template(".html", responder_information=responder_information, respond_record=respond_record, responderid=responderid, offset=offset)
 

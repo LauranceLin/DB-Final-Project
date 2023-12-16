@@ -208,7 +208,7 @@
                   <div class="col">
                     <select class="form-select" id="eventStatusSelect" name="status" required disabled>
                       <option value="" selected disabled> 選擇事件狀態 </option>
-                      <option value="0" {% if result['status'] == 'Unresolved' %} selected {% endif %}> Unsolved </option>
+                      <option value="0" {% if result['status'] == 'Unresolved' %} selected {% endif %}> Unresolved </option>
                       <option value="1" {% if result['status'] == 'Resolved' %} selected {% endif %}> Resolved </option>
                       <option value="2" {% if result['status'] == 'Ongoing' %} selected {% endif %}> Ongoing </option>
                       <option value="3" {% if result['status'] == 'FalseAlarm' %} selected {% endif %}> False Alarm </option>
