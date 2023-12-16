@@ -946,5 +946,184 @@ def respond_record(offset):
 
     # TODO: fetch all the events the responder responded to
 
+@app.route("/userlist/<int:offset>", methods=["GET"])
+@login_required
+def user_list(offset):
+    if is_admin():  
+        db_session = get_db_session()
+        
+        all_user_query = db_session.query(UserInfo, Users) \
+            .outerjoin(Users, Users.userid == UserInfo.userid) \
+            .filter(Users.role == "user") \
+            .order_by(UserInfo.userid) \
+            .offset(NUM_ITEMS_PER_PAGE*offset).limit(NUM_ITEMS_PER_PAGE).all()
+        
+        userlist = [
+            {
+                "userid": user.UserInfo.userid,
+                "name": user.UserInfo.name,
+                "email": user.Users.email,
+                "phonenumber": user.UserInfo.phonenumber,
+                "status": user.UserInfo.status
+            }
+            for user in all_user_query
+        ]
+
+        db_session.close()
+
+        return render_template(".html", userlist=userlist, offset=offset)
+
+
+
+@app.route("/userinfo/<int:userid>/<int:offset>", methods=["GET"])
+@login_required
+def user_info(userid, offset):
+    if is_admin():
+
+        db_session = get_db_session()
+
+        user_query = db_session.query(UserInfo, Users) \
+            .outerjoin(Users, Users.userid == UserInfo.userid) \
+            .filter(Users.role == "user") \
+            .filter(UserInfo.userid == userid)
+        query_user = db_session.execute(user_query).all()
+
+        user_reportrecord_query = db_session.query(Event, func.string_agg(Animal.type, literal_column("','"))) \
+            .join(Animal, Animal.eventid == Event.eventid) \
+            .group_by(Event.eventid) \
+            .filter(Event.userid == userid) \
+            .order_by(Event.createdat.desc()) \
+            .offset(offset*NUM_ITEMS_PER_PAGE).limit(NUM_ITEMS_PER_PAGE).all()
+
+
+        db_session.close()
+
+        user_information = [
+            {
+                "userid": u.UserInfo.userid,
+                "name": u.UserInfo.name,
+                "email": u.Users.email,
+                "phonenumber": u.UserInfo.phonenumber,
+                "status": u.UserInfo.status
+            }
+            for u in query_user
+        ]
+
+        report_record = [
+            {
+                "eventid": e.Event.eventid,
+                "eventtype": e.Event.eventtype,
+                "userid": e.Event.userid,
+                "responderid": e.Event.responderid,
+                "status": e.Event.status,
+                "shortdescription": e.Event.shortdescription,
+                "city": e.Event.city,
+                "district": e.Event.district,
+                "createdat": str(e.Event.createdat),
+                "animals": e[1].split(',')
+            }
+            for e in user_reportrecord_query
+        ]
+        
+        # todo: check frontend html and request
+        return render_template(".html", user_information=user_information, report_record=report_record, userid=userid, offset=offset)
+
+
+@app.route("/banuser/<int:userid>", methods=["POST"])
+@login_required
+def ban_user(userid):
+    if is_admin(): 
+        db_session = get_db_session()
+   
+        user = db_session.query(UserInfo).filter(UserInfo.userid == userid).with_for_update().first()
+        
+        if user and user.status != "banned":
+            user.status = "banned"
+            db_session.commit()
+
+        db_session.close()
+        return redirect(url_for("user_list", offset = 0))
+
+
+@app.route("/responderlist/<int:offset>", methods=["GET"])
+@login_required
+def responder_list(offset):
+    if is_admin(): 
+        db_session = get_db_session()
+       
+        all_responder_query = db_session.query(ResponderInfo, Users) \
+            .outerjoin(Users, Users.userid == ResponderInfo.responderid) \
+            .filter(Users.role == "responder") \
+            .order_by(ResponderInfo.responderid) \
+            .offset(NUM_ITEMS_PER_PAGE*offset).limit(NUM_ITEMS_PER_PAGE).all()
+
+        db_session.close()
+
+        responderlist = [
+            {
+                "responderid": r.ResponderInfo.responderid,
+                "respondername": r.ResponderInfo.name,
+                "email": r.Users.email,
+                "phonenumber": r.ResponderInfo.phonenumber,
+                "address": r.ResponderInfo.address
+            }
+            for r in all_responder_query
+        ]
+
+        # todo: check frontend html and request
+        return render_template(".html", responderlist=responderlist, offset=offset)
+
+
+@app.route("/responderinfo/<int:responderid>/<int:offset>", methods=["GET"])
+@login_required
+def responder_info(responderid, offset):
+    if is_admin():
+        db_session = get_db_session()
+
+        responder_query = db_session.query(ResponderInfo, Users) \
+            .outerjoin(Users, Users.userid == ResponderInfo.responderid) \
+            .filter(Users.role == "responder") \
+            .filter(ResponderInfo.responderid == responderid)
+        query_responder = db_session.execute(responder_query).all()
+
+        respondrecord_query = db_session.query(Event, func.string_agg(Animal.type, literal_column("','"))) \
+            .join(Animal, Animal.eventid == Event.eventid) \
+            .group_by(Event.eventid) \
+            .filter(Event.responderid == responderid) \
+            .order_by(Event.createdat.desc()) \
+            .offset(offset*NUM_ITEMS_PER_PAGE).limit(NUM_ITEMS_PER_PAGE).all()
+        
+        db_session.close()
+
+        responder_information = [
+            {
+                "responderid": r.ResponderInfo.responderid,
+                "respondername": r.ResponderInfo.name,
+                "email": r.Users.email,
+                "phonenumber": r.ResponderInfo.phonenumber,
+                "address": r.ResponderInfo.address
+            }
+            for r in query_responder
+        ]
+        
+        respond_record = [
+            {
+                "eventid": e.Event.eventid,
+                "eventtype": e.Event.eventtype,
+                "userid": e.Event.userid,
+                "responderid": e.Event.responderid,
+                "status": e.Event.status,
+                "shortdescription": e.Event.shortdescription,
+                "city": e.Event.city,
+                "district": e.Event.district,
+                "createdat": str(e.Event.createdat),
+                "animals": e[1].split(',')
+            }
+            for e in respondrecord_query
+        ]
+        
+        # todo: check frontend html and request
+        return render_template(".html", responder_information=responder_information, respond_record=respond_record, responderid=responderid, offset=offset)
+
 if __name__ == '__main__':
     app.run(debug=True)
