@@ -975,7 +975,7 @@ def user_list(offset):
 
 
 
-@app.route("/userinfo/<int:userid>/<int:offset>", methods=["GET"])
+@app.route("/viewuserinfo/<int:userid>/<int:offset>", methods=["GET"])
 @login_required
 def user_info(userid, offset):
     if is_admin():
