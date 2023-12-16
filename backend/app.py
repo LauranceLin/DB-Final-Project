@@ -533,24 +533,23 @@ def event(eventid):
         if event.status == EVENT_STATUS[EventStatus.UNRESOLVED.value]:
             # no responder has accepted this event yet
 
-            if "status" in request.form and int(request.values["status"]) == EventStatus.ONGOING.value:
-                # responder accepts event
-                try:
-                    # lock
-                    locked_event = db_session.query(Event).with_for_update().filter(Event.eventid == eventid).first()
+            # responder accepts event
+            try:
+                # lock
+                locked_event = db_session.query(Event).with_for_update().filter(Event.eventid == eventid).first()
 
-                    # update
-                    locked_event.status = EVENT_STATUS[EventStatus.ONGOING.value]
-                    locked_event.responderid = current_user.userid
+                # update
+                locked_event.status = EVENT_STATUS[EventStatus.ONGOING.value]
+                locked_event.responderid = current_user.userid
 
-                    db_session.commit()
-                    print("Unresolved --> Ongoing")
-                    return redirect(url_for("event", eventid=eventid))
+                db_session.commit()
+                print("Unresolved --> Ongoing")
+                return redirect(url_for("event", eventid=eventid))
 
-                except exc.SQLAlchemyError as e:
-                    print("error", e._message)
-                    print("failed to accept event")
-                    db_session.rollback()
+            except exc.SQLAlchemyError as e:
+                print("error", e._message)
+                print("failed to accept event")
+                db_session.rollback()
 
             # responder does not wish to respond to this event
             return redirect(url_for("event", eventid=eventid))
@@ -558,6 +557,13 @@ def event(eventid):
         elif event.status == EVENT_STATUS[EventStatus.ONGOING.value] and event.responderid == current_user.userid:
             # current_user is the responder for this event
             print("Current user is the responder for this event")
+            new_city = request.values["city"]
+            new_district = request.values["district"]
+            new_status = request.values["status"]
+            new_shortaddress = request.values["shortaddress"]
+            new_eventtype = request.values["eventtype"]
+            new_animals = request.form.getlist("animals")
+
             # udpate event info
             try:
                 # lock event
@@ -589,8 +595,8 @@ def event(eventid):
 
                     else:
                         db_session.close()
-                        error = "error: invalid status update"
-                        return redirect(url_for("event", eventid=saved_event_id, error=error))
+                        # error = "error: invalid status update"
+                        return redirect(url_for("event", eventid=saved_event_id))
 
                 # CONTINUE TESTING FROM HERE TOMORROW
                 if "eventtype" in request.form and check_eventtype(int(request.values["eventtype"])):
