@@ -20,7 +20,7 @@ fetch('/userinfo', {
                 selectElement.innerHTML = '';
                 const dataPlacement = entry.getAttribute('data-placement');
 
-                for (const placement of placementData.placement_list) {
+                for (const placement of placementData) {
                     const option = document.createElement('option');
                     option.setAttribute('value', placement.placementid);
                     if (placement.placementname === dataPlacement) {
@@ -51,12 +51,20 @@ function switchToEdit() {
     document.getElementById('citySelect').disabled = false;
     document.getElementById('districtSelect').disabled = false;
     document.getElementById('roadInput').disabled = false;
-    document.getElementsByClassName('placementSelect').disabled = false;
-    document.getElementsByClassName('animalDescriptionInput').disabled = false;
     document.getElementById('eventTypeSelect').disabled = false;
     document.getElementById('descriptionInput').disabled = false;
     document.getElementById('imageUrlInput').disabled = false;
     document.getElementById('eventStatusSelect').disabled = false;
+
+    const placementSelects = document.getElementsByClassName('placementSelect');
+    for (let i = 0; i < placementSelects.length; i++) {
+        placementSelects[i].disabled = false;
+    }
+
+    const animalDescriptionInputs = document.getElementsByClassName('animalDescriptionInput');
+    for (let i = 0; i < animalDescriptionInputs.length; i++) {
+        animalDescriptionInputs[i].disabled = false;
+    }
 }
 
 const taipeiDistricts = [
