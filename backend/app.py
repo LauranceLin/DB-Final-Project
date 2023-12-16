@@ -181,7 +181,7 @@ def get_placementinfo():
         }
         for p in placements
     ]
-    print(placement_list)
+    # print(placement_list)
     return jsonify(placement_list)
 
 @app.route("/notifications/<int:offset>", methods=["GET"])
@@ -778,7 +778,7 @@ def subscription(offset):
         subscribed_channels = []
         for c in result:
             c_info = {
-                "channel_id": c.channelid,
+                "channelid": c.channelid,
                 "eventanimal": c.eventanimal,
                 "eventtype": c.eventtype,
                 "eventdistrict": c.eventdistrict

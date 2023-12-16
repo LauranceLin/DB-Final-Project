@@ -67,10 +67,11 @@ class EventStatus(enum.Enum):
     ONGOING = 2
     FALSE_ALARM = 3
     FAILED = 4
+    DELETED = 5
     EVENT_STATUS_LEN = 5
 
 EVENT_STATUS = [
-    "Unresolved", "Resolved", "Ongoing", "FalseAlarm", "Failed"
+    "Unresolved", "Resolved", "Ongoing", "FalseAlarm", "Failed", "Deleted"
 ]
 
 class ResultType(enum.Enum):

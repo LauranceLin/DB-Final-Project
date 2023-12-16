@@ -213,6 +213,7 @@
                       <option value="2" {% if result['status'] == 'Ongoing' %} selected {% endif %}> Ongoing </option>
                       <option value="3" {% if result['status'] == 'FalseAlarm' %} selected {% endif %}> False Alarm </option>
                       <option value="4" {% if result['status'] == 'Failed' %} selected {% endif %}> Failed </option>
+                      <option value="5" {% if result['status'] == 'Deleted' %} selected {% endif %}> Deleted </option>
                     </select>
                 </div>
               </div>
@@ -223,7 +224,7 @@
                         <a href="{{url_for('reported_events', offset=0)}}" class="btn btn-primary mt-3" id="closeBtn"> Close </a>
                     </div>
                     <div class="col text-end">
-                        <button type="submit" class="btn btn-success" id="acceptBtn" style="display: none;" {% if result['responderid'] is not none %} disabled {% endif %} > Accept Task </button>
+                        <button type="submit" class="btn btn-success" id="acceptBtn" style="display: none;" {% if result['responderid'] is not none or result['status'] == 'Deleted' %} disabled {% endif %} > Accept Task </button>
                     </div>
                 </div>
               </div>
