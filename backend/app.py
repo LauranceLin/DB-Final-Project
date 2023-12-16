@@ -5,7 +5,7 @@ from schema.models import *
 import bcrypt
 import datetime
 from schema.enums import *
-from sqlalchemy import exc, select, except_, intersect, delete, union
+from sqlalchemy import exc, select, delete, union
 from celery import Celery
 import json
 
@@ -409,6 +409,8 @@ def reported_events(offset):
     else:
         animaltype = None
 
+    print("filter params: ", eventtype, eventdistrict, animaltype)
+
     db_session = get_db_session()
     # TODO: Query most recent events
     if eventtype is None and eventdistrict is None and animaltype is None:
@@ -424,13 +426,14 @@ def reported_events(offset):
             .filter(Channel.eventdistrict == eventdistrict) \
             .filter(Channel.eventtype == eventtype).first()
 
-        results = db_session.query(Event, func.string_agg(Animal.type, literal_column("','"))) \
-            .join(Animal, Animal.eventid == Event.eventid) \
-            .join(EventCategory, EventCategory.eventid == Event.eventid) \
-            .filter(EventCategory.channelid == filter_channel.channelid) \
-            .group_by(Event.eventid) \
-            .order_by(Event.createdat.desc()) \
-            .offset(offset*NUM_ITEMS_PER_PAGE).limit(NUM_ITEMS_PER_PAGE).all()
+        if filter_channel is not None:
+            results = db_session.query(Event, func.string_agg(Animal.type, literal_column("','"))) \
+                .join(Animal, Animal.eventid == Event.eventid) \
+                .join(EventCategory, EventCategory.eventid == Event.eventid) \
+                .filter(EventCategory.channelid == filter_channel.channelid) \
+                .group_by(Event.eventid) \
+                .order_by(Event.createdat.desc()) \
+                .offset(offset*NUM_ITEMS_PER_PAGE).limit(NUM_ITEMS_PER_PAGE).all()
 
         db_session.close()
 
@@ -557,150 +560,141 @@ def event(eventid):
         elif event.status == EVENT_STATUS[EventStatus.ONGOING.value] and event.responderid == current_user.userid:
             # current_user is the responder for this event
             print("Current user is the responder for this event")
-            new_city = request.values["city"]
-            new_district = request.values["district"]
-            new_status = request.values["status"]
+            new_city = int(request.values["city"])
+            new_district = int(request.values["district"])
+            new_status = int(request.values["status"])
             new_shortaddress = request.values["shortaddress"]
-            new_eventtype = request.values["eventtype"]
-            new_animals = request.form.getlist("animals")
+            new_eventtype = int(request.values["eventtype"])
+
+            if not check_location(new_city, new_district) or not check_eventtype(new_eventtype):
+                return jsonify({"error": "error with data fields"})
+
+            # new animals information
+            new_animaltypes = request.form.getlist("animaltype")
+            new_animaldescriptions = request.form.getlist("animaldescription")
+            new_placements = request.form.getlist("placement")
 
             # udpate event info
             try:
                 # lock event
                 locked_event = db_session.query(Event).with_for_update().filter(Event.eventid == eventid).first()
                 saved_event_id = locked_event.eventid
-                # original channels this event maps to
-                event_channels_query = select(EventCategory.channelid).filter(EventCategory.channelid == eventid)
 
                 delete_channel_queries = [] # query channels corresponding to old values
                 add_channel_queries = [] # query channels corresponding to new values
 
-                if "status" in request.form:
-                    if int(request.values["status"]) == EventStatus.UNRESOLVED.value: # 0
-                        # responder reverts acceptance of the event
-                        # other responders may now accept the event
-                        # current responder is only allowed to change the status to unresolved
-                        # no other values should be changed
-                        locked_event.status = EVENT_STATUS[EventStatus.UNRESOLVED.value]
-                        locked_event.responderid = None
+                # status
+                if new_status == EventStatus.ONGOING.value:
+                    pass
+                elif new_status == EventStatus.UNRESOLVED.value: # 0
+                    # responder reverts acceptance of the event
+                    # other responders may now accept the event
+                    # current responder is only allowed to change the status to unresolved
+                    # no other values should be changed
+                    locked_event.status = EVENT_STATUS[EventStatus.UNRESOLVED.value]
+                    locked_event.responderid = None
 
-                        db_session.commit()
-                        print("Ongoing --> Unresolved")
-                        return redirect(url_for("event", eventid=saved_event_id))
+                    db_session.commit()
+                    print("Ongoing --> Unresolved")
+                    return redirect(url_for("event", eventid=saved_event_id))
 
-                    if int(request.values["status"]) == EventStatus.FALSE_ALARM.value: # 3
-                        # responder can set eventstatus to false alarm and also change other event values
-                        print("Ongoing --> False Alarm")
-                        locked_event.status = EVENT_STATUS[EventStatus.FALSE_ALARM.value]
-
-                    else:
-                        db_session.close()
-                        # error = "error: invalid status update"
-                        return redirect(url_for("event", eventid=saved_event_id))
-
-                # CONTINUE TESTING FROM HERE TOMORROW
-                if "eventtype" in request.form and check_eventtype(int(request.values["eventtype"])):
-                    old_eventtype = locked_event.eventtype
-                    # TODO: delete EventCategory entries
-                    delete_channel_queries.append(select(Channel.channelid).filter(Channel.eventtype == old_eventtype))
-
-                    # TODO: add new EventCategory entries
-                    add_channel_queries.append(select(Channel.channelid).filter(Channel.eventtype == EVENT_TYPE[request["eventtype"]]))
-
-                    locked_event.eventtype = EVENT_TYPE[request["eventtype"]]
+                elif new_status == EventStatus.FALSE_ALARM.value: # 3
+                    # responder can set eventstatus to false alarm and also change other event values
+                    print("Ongoing --> False Alarm")
+                    locked_event.status = EVENT_STATUS[EventStatus.FALSE_ALARM.value]
                 else:
                     db_session.close()
-                    return jsonify({"error", "invalid eventtype"})
+                    # error = "error: invalid status update"
+                    return redirect(url_for("event", eventid=saved_event_id))
 
-                if "shortdescription" in request.form:
-                    locked_event.shortdescription = request.values["shortdescription"]
+                # eventtype
+                if locked_event.eventtype != EVENT_TYPE[new_eventtype]:
+                    old_eventtype = locked_event.eventtype
 
-                if "city" in request.values and "district" in request.values:
-                    old_district = locked_event.district
+                    delete_channel_queries.append(select(Channel.channelid).filter(Channel.eventtype == old_eventtype))
+                    add_channel_queries.append(select(Channel.channelid).filter(Channel.eventtype == EVENT_TYPE[new_eventtype]))
 
-                    if check_location(request.values["city"], request.values["district"]):
+                    locked_event.eventtype = EVENT_TYPE[new_eventtype]
 
-                        # TODO: delete EventCategory entries
-                        delete_channel_queries.append(select(Channel.channelid).filter(Channel.eventdistrict == old_district))
+                # short description
+                locked_event.shortdescription = request.values["shortdescription"]
 
-                        # TODO: add new EventCategory entries
-                        add_channel_queries.append(select(Channel.channelid).filter(Channel.eventdistrict == DISTRICTS[request.values['district']]))
+                # location
+                if CITIES[new_city] != locked_event.city or DISTRICTS[new_city][new_district] != locked_event.district:
 
-                        locked_event.city = CITIES[request.values["city"]]
-                        locked_event.district = DISTRICTS[request.values["district"]]
+                    # TODO: delete EventCategory entries
+                    delete_channel_queries.append(select(Channel.channelid).filter(Channel.eventdistrict == locked_event.district))
 
-                    else:
-                        db_session.close()
-                        return jsonify({"error", "invalid location"})
+                    # TODO: add new EventCategory entries
+                    add_channel_queries.append(select(Channel.channelid).filter(Channel.eventdistrict == DISTRICTS[new_city][new_district]))
+
+                    locked_event.city = CITIES[new_city]
+                    locked_event.district = DISTRICTS[new_city][new_district]
+
+                # shortaddress
+                locked_event.shortaddress = new_shortaddress
 
                 # animal updates
                 # animals do not need to be locked
                 # animals will not be updated if their corresponding event has not been locked already
-
                 all_animal_updates = []
 
-                if "animals" in request.form:
-                    animal_list = request.form.getlist("animals")
+                animalids = [int(id) for id in request.form.getlist("animalid")]
+                new_animaltypes = [int(type) for type in request.form.getlist("animaltype")]
+                new_animaldescriptions = request.form.getlist("animaldescription")
+                new_placements = [int(placement) for placement in request.form.getlist("placement")]
 
-                    for animal in animal_list:
-                        updated_animal_info = {}
-                        updated_animal_info['animalid'] = animal['animalid']
-                        if "description" in animal:
-                            updated_animal_info["description"] = animal["description"]
-                        if "type" in animal:
-                            if check_animaltype(animal["type"]):
-                                updated_animal_info["type"] = ANIMAL_TYPE[animal["type"]]
-                                # TODO: update EventCategory entries
-                                delete_channel_queries.append(select(Channel.channelid).filter(Channel.eventanimal == ANIMAL_TYPE[animal["type"]]))
-                                # TODO: update EventCategory entries
-                                add_channel_queries.append(select(Channel.channelid).filter(Channel.eventanimal == ANIMAL_TYPE[animal["type"]]))
-                            else:
-                                db_session.close()
-                                return jsonify({"error": "no such animal type"})
-                        if "placementid" in animal:
-                            updated_animal_info["placementid"] = animal["placementid"]
-
-                        all_animal_updates.append(updated_animal_info)
+                for i in range(0, len(new_animaltypes)):
+                    if check_animaltype(new_animaltypes[i]):
+                        all_animal_updates.append(
+                            {
+                                "animalid": animalids[i],
+                                "type": ANIMAL_TYPE[new_animaltypes[i]],
+                                "description": new_animaldescriptions[i],
+                                "placementid": new_placements[i]
+                            }
+                        )
+                        delete_channel_queries.append(select(Channel.channelid).filter(Channel.eventanimal == ANIMAL_TYPE[new_animaltypes[i]]))
+                        add_channel_queries.append(select(Channel.channelid).filter(Channel.eventanimal == ANIMAL_TYPE[new_animaltypes[i]]))
+                    else:
+                        db_session.close()
+                        return jsonify({"error": "error in animal type"})
 
                 db_session.bulk_update_mappings(Animal, all_animal_updates)
 
                 # deal with EventCategories
                 # all delete queries
                 if delete_channel_queries:
-                    delete_query = delete_channel_queries.pop(0)
-                    if delete_channel_queries:
-                        delete_query.union_all(*delete_channel_queries)
+                    delete_query = union(*delete_channel_queries)
                 else:
                     delete_query = None
 
                 # all add queries
                 if add_channel_queries:
-                    add_query = add_channel_queries.pop(0)
-                    if add_channel_queries:
-                        add_query.union_all(*add_channel_queries)
+                    add_query = union(*add_channel_queries)
                 else:
                     add_query = None
 
-                if add_query is not None:
-                    add_deleted = intersect([add_query, delete_query])
-                    add_new = except_([add_query, event_channels_query])
+                all_deleted_channels = [c.channelid for c in db_session.execute(delete_query).all()]
+                all_new_channels = [c.channelid for c in db_session.execute(add_query).all()]
+                original = [c.channelid for c in db_session.query(EventCategory.channelid).filter(EventCategory.eventid == eventid).all()]
 
-                    add_new.union(add_deleted)
+                print("the end of the complicated union stuff: ")
+                print(all_deleted_channels)
+                print(all_new_channels)
 
-                if delete_query is not None:
-                    delete_channels = except_([delete_query, add_query])
+                deleted = list(set(all_deleted_channels) - set(all_new_channels))
+                new = list(set(all_new_channels) - set(original))
 
-                all_new_channels = [c.channelid for c in db_session.execute(add_new).all()]
-                all_deleted_channels = [c.channelid for c in db_session.execute(delete_channels).all()]
+                print(deleted)
+                print(new)
 
-                new_categories = [ EventCategory(eventid=saved_event_id, channelid=cid) for cid in all_new_channels ]
+                stmt = delete(EventCategory).where(EventCategory.eventid == saved_event_id).where(EventCategory.channelid.in_(deleted))
 
-                delete(EventCategory).where(EventCategory.eventid == saved_event_id).where(EventCategory.channelid.in_(all_deleted_channels))
+                new_categories = [ EventCategory(eventid=saved_event_id, channelid=cid) for cid in new ]
 
+                db_session.execute(stmt)
                 db_session.bulk_save_objects(new_categories)
-
-                db_session.execute(delete)
-
                 db_session.commit()
 
                 return redirect(url_for("event", eventid=eventid))

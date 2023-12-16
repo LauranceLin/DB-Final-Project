@@ -20,7 +20,7 @@ class EventType(enum.Enum):
     EVENT_TYPE_LEN = 7
 
 EVENT_TYPE = [
-    "Roadkill", "AnimalBlockTraffic", "StrayAnimal", "AnimalAttack", "AnimalAbuse", "DangerousWildlifeSighting", "Other"
+    "Roadkill", "AnimalBlockingTraffic", "StrayAnimal", "AnimalAttack", "AnimalAbuse", "DangerousWildlifeSighting", "Other"
 ]
 
 class AnimalType(enum.Enum):

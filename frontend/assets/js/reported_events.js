@@ -1,31 +1,31 @@
 document.getElementById('confirmBtn').addEventListener('click', function(event) {
-    event.preventDefault(); 
-  
+    event.preventDefault();
+
     var locationValue = document.getElementById('locationSelect').value;
     var animalValue = document.getElementById('animalSelect').value;
     var eventTypeValue = document.getElementById('eventTypeSelect').value;
-  
+
     var queryParams = [];
-  
+
     if (locationValue !== '') {
-      queryParams.push('location=' + locationValue);
+      queryParams.push('eventdistrict=' + locationValue);
     }
-  
+
     if (animalValue !== '') {
-      queryParams.push('animal=' + animalValue);
+      queryParams.push('animaltype=' + animalValue);
     }
-  
+
     if (eventTypeValue !== '') {
-      queryParams.push('eventType=' + eventTypeValue);
+      queryParams.push('eventtype=' + eventTypeValue);
     }
-  
+
     var queryString = queryParams.join('&');
-  
-    var url = '/reported_events/0'; 
-  
+
+    var url = '/reported_events/0';
+
     if (queryString !== '') {
       url += '?' + queryString;
     }
-  
+
     window.location.href = url;
   });
