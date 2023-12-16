@@ -75,7 +75,7 @@
   </div>
 
   <!-- Notification -->
-  <div class="container">
+  <div class="container mt-5">
     <div class="row">
       <!-- Filter -->
       <div class="col-md-3">
@@ -93,9 +93,10 @@
           <button id="confirmFilterBtn" class="btn btn-primary"> Confirm </button>
         </div>
       </div>
-
+      <div class="col-md-9">
+        <h3> All Notifications </h3>
       {% for notification in event_list %}
-      <div class="event justify-content-center">
+      <div class="event justify-content-center" style="border: #d7dee7 solid; border-radius: 10px; padding: 1%; margin: 1%;">
           <div>
               <p>{{ notification['eventtype'] }} &raquo; &emsp; {{ notification['city'] }} / {{ notification['district'] }} /
                   {% if notification['animals']|length == 1 %}
@@ -109,13 +110,13 @@
           </div>
           <div>
               <p>
-                  &emsp;&emsp;&emsp;&emsp;&emsp; Published at {{ notification['createdat'] }} Status {{ notification['status'] }}
-                  <a href="{{url_for('event', eventid=notification['eventid']) }}"> Read more &raquo; </a>
+                  &emsp;&emsp;&emsp;&emsp;&emsp; Published at {{ notification['createdat'] }} &emsp; Status {{ notification['status'] }}
+                  <a href="{{url_for('event', eventid=notification['eventid']) }}" style="float: right; margin: 1%;"> Read more &raquo; </a>
               </p>
           </div>
       </div>
       {% endfor %}
-
+    </div>
 
       <!-- Pagination -->
       <div class="pagination justify-content-center">

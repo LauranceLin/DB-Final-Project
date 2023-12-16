@@ -75,7 +75,7 @@
   </div>
 
   <!-- Events -->
-  <div class="container">
+  <div class="container mt-5">
     <div class="row">
       <!-- Filter -->
       <h3> Select a channel > </h3>
@@ -160,10 +160,10 @@
 
       <!-- Event list -->
       <div id="eventList" class="col-md-9">
-        <h1> All Events </h1>
+        <h3> All Events </h3>
         <!-- Events -->
         {% for event in event_list %}
-        <div class="event  justify-content-center ">
+        <div class="event  justify-content-center " style="border: #d7dee7 solid; border-radius: 10px; padding: 1%; margin: 1%;">
             <div class="event-header">
                 <p> Event &raquo; &emsp; {{ event['city'] }} / {{ event['district'] }} /
                   {% if event['animals']|length == 1 %}
@@ -178,8 +178,8 @@
             </div>
             <div class="event-details">
                 <p>
-                    &emsp;&emsp;&emsp;&emsp;&emsp; Published at {{ event['createdat'] }} Status {{ event['status'] }}
-                    <a href="{{url_for('event', eventid=event['eventid']) }}"> Read more &raquo; </a>
+                    &emsp;&emsp;&emsp;&emsp;&emsp; Published at {{ event['createdat'] }} &emsp; Status {{ event['status'] }} &emsp;
+                    <a href="{{url_for('event', eventid=event['eventid']) }}" style="float: right; margin: 1%;"> Read more &raquo; </a>
                 </p>
             </div>
         </div>
@@ -196,11 +196,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<<<<<<< HEAD
-  <script src="{{ url_for('static', filename='assets/js/main.js') }}"></script>ㄌ
-=======
   <script src="{{ url_for('static', filename='assets/js/main.js') }}"></script>
   <script src="{{ url_for('static', filename='assets/js/reported_events.js') }}"></script>
->>>>>>> frontend
 </body>
 </html>

@@ -74,20 +74,20 @@
   </div>
 
   <!-- Events -->
-  <div class="container">
+  <div class="container mt-5">
     <div class="row justify-content-center align-items-center">
       <!-- Event list -->
       <div id="eventList" class="col-md-9">
-        <h1> Report Record </h1>
+        <h3> Respond Record </h3>
         <!-- Events -->
         {% for event in event_list %}
-        <div class="event justify-content-center row">
+        <div class="event justify-content-center row" style="border: #d7dee7 solid; border-radius: 10px; padding: 1%; margin: 1%;"">
           <div class="col-auto">
             <div class="event-header">
                 <p> Event &raquo; &emsp; {{ event['city'] }} / {{ event['district'] }} /
                   {% if event['animals']|length == 1 %}
                       {{ event['animals'][0] }}
-                  {% elif notification['animals']|length == 2 %}
+                  {% elif event['animals']|length == 2 %}
                       {{ event['animals'][0] }} / {{ event['animals'][1] }}
                   {% else %}
                       {{ event['animals'][0] }} / {{ event['animals'][1] }} / ...
@@ -96,13 +96,13 @@
             </div>
             <div class="event-details">
                 <p>
-                  &emsp;&emsp;&emsp;&emsp;&emsp; Published at {{ event['createdat'] }} Status {{ event['status'] }}
-                  <a href="{{url_for('event', eventid=event['eventid']) }}"> Read more &raquo; </a>
+                  &emsp;&emsp;&emsp;&emsp;&emsp; Published at {{ event['createdat'] }} &emsp; Status {{ event['status'] }} &emsp;&emsp;
+                  <a href="{{url_for('event', eventid=event['eventid']) }}" style="float: right;"> Read more &raquo; </a>
                 </p>
             </div>
           </div>
           <div class="col">
-            <button type="submit" class="btn btn-danger mt-3" name="delete"> Delete </button>
+            <button type="submit" class="btn btn-danger mt-3" name="delete" style="float: right;"> Delete </button>
           </div>
         </div>
         {% endfor %}

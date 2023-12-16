@@ -78,7 +78,6 @@ def user_loader(userid):
     db_session.close()
     return user
 
-@app.route("/")
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "GET":
@@ -117,6 +116,7 @@ def register():
 
     return redirect(url_for("login"))
 
+@app.route("/")
 @app.route("/login", methods=["GET", "POST"])
 def login():
     # GET
@@ -949,36 +949,32 @@ def respond_record(offset):
     # only responder should be able to access this endpoint
     if not is_responder():
         return redirect(url_for("login"))
-
     db_session = get_db_session()
-    respond_record = db_session.query(Event) \
+
+    respond_record = db_session.query(Event, func.string_agg(Animal.type, literal_column("','"))) \
+        .join(Animal, Animal.eventid == Event.eventid) \
+        .group_by(Event.eventid) \
         .filter(Event.responderid == current_user.userid) \
         .order_by(Event.createdat.desc()) \
         .offset(offset*NUM_ITEMS_PER_PAGE).limit(NUM_ITEMS_PER_PAGE).all()
-
-    event_list = []
-
-    if respond_record is not None:
-        for event in respond_record:
-            animals = db_session.query(Animal).filter(Animal.eventid == event.eventid).all()
-
-            animallist = [ animal.type for animal in animals]
-
-            e = {
-                "eventid": event.eventid,
-                "eventtype": event.eventtype,
-                "userid": event.userid,
-                "responderid": event.responderid,
-                "status": event.status,
-                "shortdescription": event.shortdescription,
-                "city": event.city,
-                "district": event.district,
-                "createdat": str(event.createdat),
-                "animals": animallist
-            }
-            event_list.append(e)
-
     db_session.close()
+
+    event_list = [
+        {
+            "eventid": event.Event.eventid,
+            "eventtype": event.Event.eventtype,
+            "userid": event.Event.userid,
+            "responderid": event.Event.responderid,
+            "status": event.Event.status,
+            "shortdescription": event.Event.shortdescription,
+            "city": event.Event.city,
+            "district": event.Event.district,
+            "createdat": str(event.Event.createdat),
+            "animals": event[1].split(',')
+        }
+        for event in respond_record
+    ]
+
     print(event_list)
 
     return render_template("respond_record.html", event_list=event_list, offset=offset)

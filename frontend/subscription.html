@@ -78,7 +78,6 @@
   </div>
 
   <div class="container mt-5">
-    <h1> My subscription </h1>
     <div class="row mb-4">
       <!-- Subscribe Form -->
       <h3> Select a channel > </h3>
@@ -166,12 +165,12 @@
         <h3> Subscribed Channels </h3>
         <!-- Events -->
         {% for channel in subscribed_channels %}
-        <div class="row justify-content-center">
-          <div class="col-auto">
-            <p> {{ channel.eventdistrict }} / {{ channel.eventanimal }} / {{ channel.eventtype }} </p>
+        <div class="row justify-content-center" style="margin: 1%;">
+          <div class="col-auto" style="display: flex; justify-content: center; align-items: center;">
+             {{ channel.eventdistrict }} / {{ channel.eventanimal }} / {{ channel.eventtype }}
           </div>
           <div class="col">
-            <button type="submit" class="btn btn-danger delete-button" name="delete"  data-channelid="{{ channel.channelid }}"> Delete </button>
+            <button type="submit" class="btn btn-danger delete-button" name="delete"  data-channelid="{{ channel.channelid }}" style="float: right;"> Delete </button>
           </div>
         </div>
         {% endfor %}
