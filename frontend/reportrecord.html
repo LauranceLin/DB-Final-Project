@@ -75,14 +75,14 @@
   </div>
 
   <!-- Events -->
-  <div class="container">
+  <div class="container mt-5">
     <div class="row justify-content-center align-items-center">
       <!-- Event list -->
       <div id="eventList" class="col-md-9">
-        <h1> Report Record </h1>
+        <h3> Report Record </h3>
         <!-- Events -->
         {% for event in event_list %}
-        <div class="event justify-content-center row">
+        <div class="event justify-content-center row" style="border: #d7dee7 solid; border-radius: 10px; padding: 1%; margin: 1%;">
           <div class="col-auto">
             <div class="event-header">
                 <p> Event &raquo; &emsp; {{ event['city'] }} / {{ event['district'] }} /
@@ -110,9 +110,9 @@
 
         <!-- Pagination -->
         <div class="pagination justify-content-center">
-          <a {% if offset == 0 %} href="#" {% else %} href="{{ url_for('notifications', offset = offset - 1) }}" {% endif %}> 上一頁 </a>
+          <a {% if offset == 0 %} href="#" {% else %} href="{{ url_for('reportrecord', offset = offset - 1) }}" {% endif %}> 上一頁 </a>
           <span> Page {{ offset + 1 }} </span>
-          <a {% if offset == 0 %} href="#" {% else %} href="{{ url_for('notifications', offset = offset + 1) }}" {% endif %}> 下一頁 </a>
+          <a {% if offset == 100 %} href="#" {% else %} href="{{ url_for('reportrecord', offset = offset + 1) }}" {% endif %}> 下一頁 </a>
         </div>
       </div>
     </div>

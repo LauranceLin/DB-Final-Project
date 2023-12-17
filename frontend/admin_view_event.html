@@ -219,47 +219,17 @@
                 </div>
               </div>
 
-              <div>
-                <div class="row mt-3">
-                    <div class="col">
-                        <a href="{{url_for('reported_events', offset=0)}}" class="btn btn-primary mt-3" id="closeBtn"> Close </a>
-                    </div>
-                    <div class="col text-end">
-                        <button type="submit" class="btn btn-success" id="acceptBtn" style="display: none;" {% if result['responderid'] is not none or result['status'] == 'Deleted' %} disabled {% endif %} > Accept Task </button>
-                    </div>
+            <div class="row mt-3">
+                <div class="col">
+                    <a href="{{url_for('reported_events', offset=0)}}" class="btn btn-primary mt-3" id="closeBtn"> Close </a>
                 </div>
-              </div>
-
-              <div class="row justify-content-around" id="editZone" style="display: none;">
-                  <div class="col-md-3">
-                      <a class="btn btn-primary btn-block" id="editBtn" onclick="switchToEdit()"> Edit Event </a>
-                  </div>
-                  <div class="col-md-3">
-                      <a href="/event_results.html" class="btn btn-primary btn-block"> Send Warning </a>
-                  </div>
-                  <div class="col-md-3">
-                      <a href="/event_results.html" class="btn btn-primary btn-block"> Post Report </a>
-                  </div>
-              </div>
-
-              <div class="row justify-content-around" id="editMode" style="display: none;">
-                <div class="col-md-3">
-                  <button type="submit" class="btn btn-success" id="sendBtn"> Send </button>
-                </div>
-              </div>
-            </form>
-
-            <div class="col" id="report" style="display: none;">
-            {% if "warning" in result %}
-                <h1>Warning</h1>
-                <input type="text" class="row" disabled value="{{ result['warning']['warninglevel'] }}">
-                <input type="text" class="row" disabled value="{{ result['warning']['shortdescription'] }}">
-            {% elif "report" in result %}
-                <h1>Report</h1>
-                <input type="text" class="row" disabled value="{{ result['report']['shortdescription'] }}">
-                <input type="text" class="row" disabled value="{{ result['report']['createdat'] }}">
-            {% endif %}
             </div>
+
+            <div class="row justify-content-center">
+                <button type="button" class="btn btn-danger" id="deleteEventBtn" data-eventid="{{ eventid}}"> Delete Event </button>
+            </div>
+          </div>
+           </form>
         </div>
     </div>
   </div>

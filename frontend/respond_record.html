@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title> Report Record </title>
+  <title> Respond Record </title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="{{ url_for('static', filename='assets/css/main.css') }}" rel="stylesheet">
 </head>
@@ -35,20 +35,6 @@
           </li>
           <li class="nav-item">
             <a class="nav-link active" id="respond-record" aria-current="page" href="{{ url_for('respond_record', offset=0) }}"> Respond Record </a>
-            <a class="nav-link" href="/notifications/0"> Notifications </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="/addevent.html" style="display: none;"> Create Event </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="/subscription/0"> My Subscription </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" id="report-record" href="/reportrecord/0" style="display: none;"> Report Record </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link active"  aria-current="page" href="/respond_record/0"> Respond Record </a>
-          </li>
           <li class="nav-item">
             <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#profileModal">
               <img src="{{url_for('static', filename='images/icon.png')}}" alt="Icon" width="30" height="30">
@@ -88,20 +74,20 @@
   </div>
 
   <!-- Events -->
-  <div class="container">
+  <div class="container mt-5">
     <div class="row justify-content-center align-items-center">
       <!-- Event list -->
       <div id="eventList" class="col-md-9">
-        <h1> Report Record </h1>
+        <h3> Respond Record </h3>
         <!-- Events -->
         {% for event in event_list %}
-        <div class="event justify-content-center row">
+        <div class="event justify-content-center row" style="border: #d7dee7 solid; border-radius: 10px; padding: 1%; margin: 1%;"">
           <div class="col-auto">
             <div class="event-header">
                 <p> Event &raquo; &emsp; {{ event['city'] }} / {{ event['district'] }} /
                   {% if event['animals']|length == 1 %}
                       {{ event['animals'][0] }}
-                  {% elif notification['animals']|length == 2 %}
+                  {% elif event['animals']|length == 2 %}
                       {{ event['animals'][0] }} / {{ event['animals'][1] }}
                   {% else %}
                       {{ event['animals'][0] }} / {{ event['animals'][1] }} / ...
@@ -110,22 +96,22 @@
             </div>
             <div class="event-details">
                 <p>
-                  &emsp;&emsp;&emsp;&emsp;&emsp; Published at {{ event['createdat] }} Status {{ event['status'] }}
-                  <a href="{{url_for('event', eventid=event['eventid']) }}"> Read more &raquo; </a>
+                  &emsp;&emsp;&emsp;&emsp;&emsp; Published at {{ event['createdat'] }} &emsp; Status {{ event['status'] }} &emsp;&emsp;
+                  <a href="{{url_for('event', eventid=event['eventid']) }}" style="float: right;"> Read more &raquo; </a>
                 </p>
             </div>
           </div>
           <div class="col">
-            <button type="submit" class="btn btn-danger mt-3" name="delete"> Delete </button>
+            <button type="submit" class="btn btn-danger mt-3" name="delete" style="float: right;"> Delete </button>
           </div>
         </div>
         {% endfor %}
 
         <!-- Pagination -->
         <div class="pagination justify-content-center">
-          <a {% if offset == 0 %} href="#" {% else %} href="{{ url_for('notifications', offset = offset - 1) }}" {% endif %}> 上一頁 </a>
+          <a {% if offset == 0 %} href="#" {% else %} href="{{ url_for('respond_record', offset = offset - 1) }}" {% endif %}> 上一頁 </a>
           <span> Page {{ offset + 1 }} </span>
-          <a {% if offset == 0 %} href="#" {% else %} href="{{ url_for('notifications', offset = offset + 1) }}" {% endif %}> 下一頁 </a>
+          <a {% if offset == 100 %} href="#" {% else %} href="{{ url_for('respond_record', offset = offset + 1) }}" {% endif %}> 下一頁 </a>
         </div>
       </div>
     </div>

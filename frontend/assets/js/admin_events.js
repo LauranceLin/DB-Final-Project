@@ -21,7 +21,7 @@ document.getElementById('confirmBtn').addEventListener('click', function(event) 
 
     var queryString = queryParams.join('&');
 
-    var url = '/reported_events/0';
+    var url = '/admin_events/0';
 
     if (queryString !== '') {
       url += '?' + queryString;
