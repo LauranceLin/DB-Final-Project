@@ -79,10 +79,10 @@ class EventImages(Base):
     # TEXT datatype
     imagelink: Mapped[str] = mapped_column("imagelink", String)
 
-class EventCategory(Base):
-    __tablename__ = "eventcategory"
-    eventid: Mapped[int] = mapped_column("eventid", ForeignKey("event.eventid"), primary_key=True)
-    channelid: Mapped[int] = mapped_column("channelid", ForeignKey("channel.channelid"), primary_key=True)
+# class EventCategory(Base):
+#     __tablename__ = "eventcategory"
+#     eventid: Mapped[int] = mapped_column("eventid", ForeignKey("event.eventid"), primary_key=True)
+#     channelid: Mapped[int] = mapped_column("channelid", ForeignKey("channel.channelid"), primary_key=True)
 
 class Placement(Base):
     __tablename__ = "placement"

@@ -57,6 +57,15 @@ function switchToEdit() {
     document.getElementById('imageUrlInput').disabled = false;
     document.getElementById('eventStatusSelect').disabled = false;
 
+    status_selector = document.getElementById('eventStatusSelect');
+    status_selector.children[0].disabled = true // 選擇事件狀態
+    status_selector.children[1].disabled = false // unresolved
+    status_selector.children[2].disabled = true // resolved
+    status_selector.children[3].disabled = false // ongoing
+    status_selector.children[4].disabled = false // false alarm
+    status_selector.children[5].disabled = true // failed
+    status_selector.children[6].disabled = true // deleted
+
     const placementSelects = document.getElementsByClassName('placementSelect');
     for (let i = 0; i < placementSelects.length; i++) {
         placementSelects[i].disabled = false;
