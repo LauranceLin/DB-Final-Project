@@ -132,18 +132,6 @@ CREATE TABLE IF NOT EXISTS SubscriptionRecord(
         ON UPDATE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS EventCategory(
-    ChannelId INT NOT NULL,
-    EventId INT NOT NULL,
-    PRIMARY KEY(ChannelId, EventId),
-    FOREIGN KEY(ChannelId) REFERENCES Channel(ChannelId)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY(EventId) REFERENCES Event(EventId)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE
-);
-
 CREATE TABLE IF NOT EXISTS Notification(
     NotificationType VARCHAR(7) NOT NULL,
     EventId INT NOT NULL,
