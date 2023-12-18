@@ -132,6 +132,7 @@ def register():
     return redirect(url_for("login"))
 
 @app.route("/")
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     # GET
@@ -151,10 +152,19 @@ def login():
     if user and bcrypt.checkpw(password.encode(), user.password.encode()):
         login_user(user)
         print("User logged in!")
-        return redirect(url_for("notifications", offset=0))
+        if is_user() or is_responder():
+            print("User logged in!")
+            return redirect(url_for("notifications", offset=0))
+        
+        ##### admin redirect #####
+        elif is_admin():
+            print("Admin logged in!")
+            return redirect(url_for("admin_events", offset=0))
+        
     else:
         print("Login failed")
         return redirect(url_for("login"))
+    
 
 @app.route("/userinfo", methods=["GET"])
 def get_userinfo():
@@ -738,6 +748,7 @@ def event(eventid):
         # others should not be able to edit this event
         return redirect(url_for("event", eventid=eventid))
 
+
 @app.route("/delete_event/<int:eventid>", methods=["POST"])
 @login_required
 def delete_event(eventid):
@@ -746,7 +757,7 @@ def delete_event(eventid):
         event = db_session.query(Event).filter(Event.eventid == eventid).first()
 
         if event is not None:
-            if is_responder() or (is_user() and current_user.userid == event.userid):
+            if is_responder() or (is_user() and current_user.userid == event.userid) or is_admin():
                 locked_event = db_session.query(Event).filter(Event.eventid == eventid).with_for_update().first()
                 locked_event.status = EVENT_STATUS[EventStatus.DELETED.value]
                 db_session.commit()
@@ -762,6 +773,8 @@ def delete_event(eventid):
         return redirect(url_for('reported_events', offset=0))
     elif is_user():
         return redirect(url_for('reportrecord', offset=0))
+    elif is_admin():
+        return redirect(url_for('admin_events', offset=0))
 
 # current users report record
 @app.route('/reportrecord/<int:offset>')
@@ -1017,6 +1030,40 @@ def respond_record(offset):
 
     return render_template("respond_record.html", event_list=event_list, offset=offset)
 
+# admin view all events
+@app.route("/admin_events/<int:offset>", methods=["GET"])
+@login_required
+def admin_events(offset):
+    if is_admin():
+        db_session = get_db_session()
+
+        all_event_query = db_session.query(Event, func.string_agg(Animal.type, literal_column("','"))) \
+            .join(Animal, Animal.eventid == Event.eventid) \
+            .group_by(Event.eventid) \
+            .order_by(Event.createdat.desc()) \
+            .offset(offset*NUM_ITEMS_PER_PAGE).limit(NUM_ITEMS_PER_PAGE).all()
+
+        event_list = [
+            {
+                "eventid": event.Event.eventid,
+                "eventtype": event.Event.eventtype,
+                "userid": event.Event.userid,
+                "responderid": event.Event.responderid,
+                "status": event.Event.status,
+                "shortdescription": event.Event.shortdescription,
+                "city": event.Event.city,
+                "district": event.Event.district,
+                "createdat": str(event.Event.createdat),
+                "animals": event[1].split(',')
+            }
+            for event in all_event_query
+        ]
+
+        db_session.close()
+        return render_template("admin_events.html", event_list=event_list, offset=offset)
+
+
+# admin view all users
 @app.route("/userlist/<int:offset>", methods=["GET"])
 @login_required
 def user_list(offset):
@@ -1042,13 +1089,14 @@ def user_list(offset):
 
         db_session.close()
 
-        return render_template(".html", userlist=userlist, offset=offset)
+    
+        return render_template("userlist.html", userlist=userlist, offset=offset)
 
 
 
 @app.route("/viewuserinfo/<int:userid>/<int:offset>", methods=["GET"])
 @login_required
-def user_info(userid, offset):
+def viewuserinfo(userid, offset):
     if is_admin():
 
         db_session = get_db_session()
@@ -1097,7 +1145,7 @@ def user_info(userid, offset):
         ]
 
         # todo: check frontend html and request
-        return render_template(".html", user_information=user_information, report_record=report_record, userid=userid, offset=offset)
+        return render_template("viewuserinfo.html", user_information=user_information, report_record=report_record, userid=userid, offset=offset)
 
 
 @app.route("/banuser/<int:userid>", methods=["POST"])
@@ -1142,12 +1190,12 @@ def responder_list(offset):
         ]
 
         # todo: check frontend html and request
-        return render_template(".html", responderlist=responderlist, offset=offset)
+        return render_template("responderlist.html", responderlist=responderlist, offset=offset)
 
 
 @app.route("/responderinfo/<int:responderid>/<int:offset>", methods=["GET"])
 @login_required
-def responder_info(responderid, offset):
+def responderinfo(responderid, offset):
     if is_admin():
         db_session = get_db_session()
 
@@ -1194,7 +1242,79 @@ def responder_info(responderid, offset):
         ]
 
         # todo: check frontend html and request
-        return render_template(".html", responder_information=responder_information, respond_record=respond_record, responderid=responderid, offset=offset)
+        return render_template("responderinfo.html", responder_information=responder_information, respond_record=respond_record, responderid=responderid, offset=offset)
+
+@app.route("/admin_view_event/<int:eventid>", methods=["GET", "POST"])
+@login_required
+def admin_view_event(eventid):
+    if request.method == "GET" and is_admin():
+        db_session = get_db_session()
+
+        query_event = select(Event, ResponderInfo.name) \
+                .outerjoin(ResponderInfo, ResponderInfo.responderid == Event.responderid) \
+                .filter(Event.eventid == eventid)
+
+        eventinfo = db_session.execute(query_event).first()
+        event = eventinfo.Event
+        event_responder_name = eventinfo.name
+        # test if outerjoin works (includes all events that have responder = Null values)
+        query_animals = select(Animal, Placement.name) \
+            .outerjoin(Placement, Placement.placementid == Animal.placementid) \
+            .filter(Animal.eventid == eventid)
+
+        eventanimals = db_session.execute(query_animals).all()
+        print(eventanimals)
+
+        animallist = [
+            {
+                "animalid": animal.Animal.animalid,
+                "placementid": animal.Animal.placementid,
+                "placementname": animal.name,
+                "type": animal.Animal.type,
+                "description": animal.Animal.description
+            }
+        for animal in eventanimals]
+
+        result = {
+            "eventid": event.eventid,
+            "eventtype": event.eventtype,
+            "userid": event.userid,
+            "responderid": event.responderid,
+            "respondername": event_responder_name,
+            "status": event.status,
+            "shortdescription": event.shortdescription,
+            "city": event.city,
+            "district": event.district,
+            "shortaddress": event.shortaddress,
+            "createdat": str(event.createdat),
+            "animals": animallist
+        }
+
+        if event.status == EVENT_STATUS[EventStatus.RESOLVED.value]:
+            # fetch report info
+            report = db_session.query(Report).filter(Report.eventid == event.eventid).first()
+            if report is not None:
+                result["report"] = {
+                    "shortdescription": report.shortdescription,
+                    "createdat": report.createdat
+                }
+        elif event.status == EVENT_STATUS[EventStatus.FAILED.value]:
+            # fetch warning info
+            warning = db_session.query(Warning).filter(Warning.eventid == event.eventid).first()
+            if warning is not None:
+                result["warning"] = {
+                    "warninglevel": warning.warninglevel,
+                    "shortdescription": warning.shortdescription,
+                    "createdat": warning.createdat
+                }
+        db_session.close()
+        print(result)
+        # return result
+        return render_template("admin_view_event.html", result=result, eventid=eventid)
+    else:
+        return redirect(url_for("admin_events", eventid=eventid))
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
