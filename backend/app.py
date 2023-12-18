@@ -1116,7 +1116,9 @@ def viewuserinfo(userid, offset):
             .outerjoin(Users, Users.userid == UserInfo.userid) \
             .filter(Users.role == "user") \
             .filter(UserInfo.userid == userid)
-        query_user = db_session.execute(user_query).all()
+        query_user = db_session.execute(user_query).first() 
+        user_info = query_user.UserInfo
+        user_email = query_user.Users
 
         user_reportrecord_query = db_session.query(Event, func.string_agg(Animal.type, literal_column("','"))) \
             .join(Animal, Animal.eventid == Event.eventid) \
@@ -1128,17 +1130,14 @@ def viewuserinfo(userid, offset):
 
         db_session.close()
 
-        user_information = [
-            {
-                "userid": u.UserInfo.userid,
-                "name": u.UserInfo.name,
-                "email": u.Users.email,
-                "phonenumber": u.UserInfo.phonenumber,
-                "status": u.UserInfo.status
-            }
-            for u in query_user
-        ]
-
+        user_information = {
+                "userid": user_info.userid,
+                "name": user_info.name,
+                "email": user_email.email,
+                "phonenumber": user_info.phonenumber,
+                "status": user_info.status
+                }
+        
         report_record = [
             {
                 "eventid": e.Event.eventid,
@@ -1214,7 +1213,9 @@ def responderinfo(responderid, offset):
             .outerjoin(Users, Users.userid == ResponderInfo.responderid) \
             .filter(Users.role == "responder") \
             .filter(ResponderInfo.responderid == responderid)
-        query_responder = db_session.execute(responder_query).all()
+        query_responder = db_session.execute(responder_query).first()
+        responder_info = query_responder.ResponderInfo
+        responder_email = query_responder.Users
 
         respondrecord_query = db_session.query(Event, func.string_agg(Animal.type, literal_column("','"))) \
             .join(Animal, Animal.eventid == Event.eventid) \
@@ -1225,16 +1226,14 @@ def responderinfo(responderid, offset):
 
         db_session.close()
 
-        responder_information = [
-            {
-                "responderid": r.ResponderInfo.responderid,
-                "respondername": r.ResponderInfo.name,
-                "email": r.Users.email,
-                "phonenumber": r.ResponderInfo.phonenumber,
-                "address": r.ResponderInfo.address
+        responder_information = {
+                "responderid": responder_info.responderid,
+                "respondername": responder_info.name,
+                "email": responder_email.email,
+                "phonenumber": responder_info.phonenumber,
+                "address": responder_info.address
             }
-            for r in query_responder
-        ]
+   
 
         respond_record = [
             {
