@@ -29,7 +29,7 @@
           </li>
           <li class="nav-item">
             <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#profileModal">
-              <img src="images/icon.png" alt="Icon" width="30" height="30">
+              <img src="{{ url_for('static', filename='images/icon.png')}}" alt="Icon" width="30" height="30">
             </a>
           </li>
         </ul>
@@ -71,10 +71,10 @@
         {% for responder in responderlist %}
         <div class="justify-content-center">
             <div>
-                <p> Responder ID {{ responder['responderid'] }} &emsp; Name {{ responder['respondername'] }} &emsp; Email {{ responder['email']}} &emsp; Phone Number {{ responder['phonenumber']}} </p> 
+                <p> Responder ID {{ responder['responderid'] }} &emsp; Name {{ responder['respondername'] }} &emsp; Email {{ responder['email']}} &emsp; Phone Number {{ responder['phonenumber']}} </p>
             </div>
             <div>
-                <p> 
+                <p>
                     &emsp; Address {{ responder['address'] }} &emsp;&emsp;
                     <a class="col" href="{{url_for('responderinfo', responderid=responder['responderid'], offset=0) }}"> Read more </a>
                 </p>
@@ -84,9 +84,9 @@
 
         <!-- Pagination -->
         <div class="pagination justify-content-center">
-          <a {% if offset == 0 %} href="#" {% else %} href="{{ url_for('responder_list', offset = offset - 1) }}" {% endif %}> 上一頁 </a>
+          <a {% if offset == 0 %} href="{{ url_for('admin_events', offset = offset) }}" {% else %} href="{{ url_for('responder_list', offset = offset - 1) }}" {% endif %}> 上一頁 </a>
           <span> Page {{ offset + 1 }} </span>
-          <a {% if offset == 100 %} href="#" {% else %} href="{{ url_for('responder_list', offset = offset + 1) }}" {% endif %}> 下一頁 </a>
+          <a {% if responderlist | length < 10 %} href="{{ url_for('admin_events', offset = offset) }}" {% else %} href="{{ url_for('responder_list', offset = offset + 1) }}" {% endif %}> 下一頁 </a>
         </div>
       </div>
     </div>

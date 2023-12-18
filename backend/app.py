@@ -155,16 +155,16 @@ def login():
         if is_user() or is_responder():
             print("User logged in!")
             return redirect(url_for("notifications", offset=0))
-        
+
         ##### admin redirect #####
         elif is_admin():
             print("Admin logged in!")
             return redirect(url_for("admin_events", offset=0))
-        
+
     else:
         print("Login failed")
         return redirect(url_for("login"))
-    
+
 
 @app.route("/userinfo", methods=["GET"])
 def get_userinfo():
@@ -1089,7 +1089,7 @@ def user_list(offset):
 
         db_session.close()
 
-    
+
         return render_template("userlist.html", userlist=userlist, offset=offset)
 
 
