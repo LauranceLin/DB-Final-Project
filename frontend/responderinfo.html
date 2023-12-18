@@ -83,9 +83,9 @@
 
         <!-- Pagination -->
         <div class="pagination justify-content-center">
-            <a {% if offset == 0 %} href="#" {% else %} href="{{ url_for('responderinfo', responderid=responderid, offset=offset-1) }}" {% endif %}> 上一頁 </a>
+            <a {% if offset == 0 %} href="{{ url_for('responderinfo', responderid=responderid, offset=0) }}" {% else %} href="{{ url_for('responderinfo', responderid=responderid, offset=offset-1) }}" {% endif %}> 上一頁 </a>
             <span> Page {{ offset + 1 }} </span>
-            <a {% if offset == 100 %} href="#" {% else %} href="{{ url_for('responderinfo', responderid=responderid, offset=offset+1) }}" {% endif %}> 下一頁 </a>
+            <a {% if respond_record | length < 10 %} href="{{ url_for('responderinfo', responderid=responderid, offset=offset) }}" {% else %} href="{{ url_for('responderinfo', responderid=responderid, offset=offset+1) }}" {% endif %}> 下一頁 </a>
         </div>
     </div>
   </div>

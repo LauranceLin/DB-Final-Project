@@ -1155,10 +1155,12 @@ def ban_user(userid):
         db_session = get_db_session()
 
         user = db_session.query(UserInfo).filter(UserInfo.userid == userid).with_for_update().first()
-
-        if user and user.status != "banned":
-            user.status = "banned"
-            db_session.commit()
+        try:
+            if user and user.status != "banned":
+                user.status = "banned"
+                db_session.commit()
+        except exc.SQLAlchemyError as e:
+            db_session.rollback()
 
         db_session.close()
         return redirect(url_for("user_list", offset = 0))
