@@ -81,7 +81,7 @@
         <div class="justify-content-center">
             <p> 
               <span class="info-label">Event ID</span> <span class="info-value">{{ event['eventid'] }}</span> &emsp; 
-              <span class="info-label">Created At</span> <span class="info-value">{{ event['createdat'] }}</span> &emsp; 
+              <span class="info-label">Created At</span> <span class="info-value">{{ event['createdat'][:16] }}</span> &emsp; 
               <span class="info-label">Status</span> <span class="info-value">{{ event['status']}}</span> &emsp; 
               <span class="info-label">Responder</span> <span class="info-value">{{ event['responderid']}}</span> 
             </p> 
