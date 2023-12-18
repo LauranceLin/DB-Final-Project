@@ -1035,13 +1035,77 @@ def respond_record(offset):
 @login_required
 def admin_events(offset):
     if is_admin():
+        # eventtype
+        if 'eventtype' in request.args:
+            eventtype = int(request.args.get('eventtype'))
+            if check_eventtype(eventtype):
+                eventtype = EVENT_TYPE[eventtype]
+            else:
+                return jsonify({"error": "no such eventtype"})
+        else:
+            eventtype = None
+
+        # eventdistrict
+        if 'eventdistrict' in request.args:
+            eventdistrict = request.args.get('eventdistrict')
+        else:
+            eventdistrict = None
+
+        # animaltype
+        if 'animaltype' in request.args:
+            animaltype = int(request.args.get('animaltype'))
+            if check_animaltype(animaltype):
+                animaltype = ANIMAL_TYPE[animaltype]
+            else:
+                return jsonify({"error": "no such animal type"})
+        else:
+            animaltype = None
+
+        print("filter params: ", eventtype, eventdistrict, animaltype)
+
         db_session = get_db_session()
 
-        all_event_query = db_session.query(Event, func.string_agg(Animal.type, literal_column("','"))) \
-            .join(Animal, Animal.eventid == Event.eventid) \
-            .group_by(Event.eventid) \
-            .order_by(Event.createdat.desc()) \
-            .offset(offset*NUM_ITEMS_PER_PAGE).limit(NUM_ITEMS_PER_PAGE).all()
+
+        if eventtype is None and eventdistrict is None and animaltype is None:
+            # no filters
+            all_event_query = db_session.query(Event, func.string_agg(Animal.type, literal_column("','"))) \
+                .join(Animal, Animal.eventid == Event.eventid) \
+                .group_by(Event.eventid) \
+                .order_by(Event.createdat.desc()) \
+                .offset(offset*NUM_ITEMS_PER_PAGE).limit(NUM_ITEMS_PER_PAGE).all()
+
+            db_session.close()
+        else:
+            # with filters
+            filtered_events = select(Event.eventid).join(Animal, Animal.eventid == Event.eventid)
+
+            if eventdistrict is not None:
+                filtered_events = filtered_events.filter(Event.district == eventdistrict)
+
+            if eventtype is not None:
+                filtered_events = filtered_events.filter(Event.eventtype == eventtype)
+
+            if animaltype is not None:
+                filtered_events = filtered_events.filter(Animal.type == animaltype)
+
+            filtered_events = filtered_events.group_by(Event.eventid) \
+                .order_by(Event.createdat.desc()) \
+                .offset(offset*NUM_ITEMS_PER_PAGE).limit(NUM_ITEMS_PER_PAGE)
+
+            print(filtered_events)
+
+            matched_events = [e[0] for e in db_session.execute(filtered_events).all()]
+
+            print("ALL MATCHED EVENTS: ", len(matched_events))
+
+            all_event_query = db_session.query(Event, func.string_agg(Animal.type, literal_column("','"))) \
+                .join(Animal, Animal.eventid == Event.eventid) \
+                .filter(Event.eventid.in_(matched_events)) \
+                .group_by(Event.eventid) \
+                .order_by(Event.createdat.desc()) \
+                .offset(offset*NUM_ITEMS_PER_PAGE).limit(NUM_ITEMS_PER_PAGE).all()
+
+            db_session.close()
 
         event_list = [
             {
