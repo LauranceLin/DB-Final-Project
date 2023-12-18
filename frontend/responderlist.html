@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title> User Information </title>
+  <title> Responder List </title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="{{ url_for('static', filename='assets/css/main.css') }}" rel="stylesheet">
 </head>
@@ -25,7 +25,7 @@
             <a class="nav-link" href="{{url_for('user_list', offset=0)}}"> User List </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('responder_list', offset=0) }}"> Responder List </a>
+            <a class="nav-link active" aria-current="page" href="{{ url_for('responder_list', offset=0) }}"> Responder List </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#profileModal">
@@ -61,44 +61,41 @@
     </div>
   </div>
 
-  <!-- Users -->
+  <!-- Responders -->
   <div class="container mt-5">
-    <div id="userInfo" class="col-md-9">
-        <h3> User Info </h3>
-        <!-- User Info -->
+    <div class="row">
+      <!-- Responder list -->
+      <div id="responderList" class="col-md-9">
+        <h3> Responder List </h3>
+        <!-- Responders -->
+        {% for responder in responderlist %}
         <div class="justify-content-center">
-            <p> 
-                <span class="info-label">User ID</span> <span class="info-value"> {{ user_information['userid'] }}</span> &emsp; 
-                <span class="info-label">Name</span> <span class="info-value"> {{ user_information['name'] }}</span> &emsp; 
-                <span class="info-label">Email</span> <span class="info-value"> {{ user_information['email']}}</span> &emsp; 
-                <span class="info-label">Phone Number</span> <span class="info-value"> {{ user_information['phonenumber']}}</span> &emsp; 
-                <span class="info-label">Status</span> <span class="info-value"> {{ user_information['status'] }}</span> 
-            </p>
-            <button type="button" class="btn btn-danger" id="banUserBtn" data-userid="{{ userid }}"> Ban User </button>
-        </div>
-        <!-- Report records -->
-        {% for event in report_record %}
-        <div class="justify-content-center">
-            <p> 
-              <span class="info-label">Event ID</span> <span class="info-value">{{ event['eventid'] }}</span> &emsp; 
-              <span class="info-label">Created At</span> <span class="info-value">{{ event['createdat'] }}</span> &emsp; 
-              <span class="info-label">Status</span> <span class="info-value">{{ event['status']}}</span> &emsp; 
-              <span class="info-label">Responder</span> <span class="info-value">{{ event['responderid']}}</span> 
-            </p> 
+            <div>
+                <p> <span class="info-label">Responder ID</span> <span class="info-value">{{ responder['responderid'] }}</span> &emsp; 
+                  <span class="info-label">Name</span> <span class="info-value">{{ responder['respondername'] }}</span> &emsp; 
+                  <span class="info-label">Email</span> <span class="info-value">{{ responder['email']}}</span> &emsp; 
+                  <span class="info-label">Phone Number</span> <span class="info-value">{{ responder['phonenumber']}}</span> </p> 
+            </div>
+            <div>
+                <p> 
+                    &emsp; <span class="info-label">Address</span> <span class="info-value">{{ responder['address'] }}</span> &emsp;&emsp;
+                    <a class="col" href="{{url_for('responderinfo', responderid=responder['responderid'], offset=0) }}"> Read more </a>
+                </p>
+            </div>
         </div>
         {% endfor %}
 
         <!-- Pagination -->
         <div class="pagination justify-content-center">
-            <a {% if offset == 0 %} href="#" {% else %} href="{{ url_for('viewuserinfo', userid=userid, offset=offset-1) }}" {% endif %}> 上一頁 </a>
-            <span> Page {{ offset + 1 }} </span>
-            <a {% if offset == 100 %} href="#" {% else %} href="{{ url_for('viewuserinfo', userid=userid, offset=offset+1) }}" {% endif %}> 下一頁 </a>
+          <a {% if offset == 0 %} href="#" {% else %} href="{{ url_for('responder_list', offset = offset - 1) }}" {% endif %}> 上一頁 </a>
+          <span> Page {{ offset + 1 }} </span>
+          <a {% if offset == 100 %} href="#" {% else %} href="{{ url_for('responder_list', offset = offset + 1) }}" {% endif %}> 下一頁 </a>
         </div>
+      </div>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="{{ url_for('static', filename='assets/js/admin_main.js') }}"></script>
-  <script src="{{ url_for('static', filename='assets/js/viewuserinfo.js') }}"></script>
 </body>
 </html>

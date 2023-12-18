@@ -68,15 +68,21 @@
         <!-- Responder Info -->
         <div class="justify-content-center">
             <p> 
-                Responder ID {{ responder_information['responderid'] }} &emsp; Name {{ responder_information['respondername'] }} &emsp; Email {{ responder_information['email']}} &emsp; Phone Number {{ responder_information['phonenumber']}} <br>
-                Address {{responder_information['address'] }}
+              <span class="info-label">Responder ID</span> <span class="info-value">{{ responder_information['responderid'] }}</span> &emsp; 
+              <span class="info-label">Name</span> <span class="info-value">{{ responder_information['respondername'] }}</span> &emsp; 
+              <span class="info-label">Email</span> <span class="info-value">{{ responder_information['email']}}</span> &emsp; 
+              <span class="info-label">Phone Number</span> <span class="info-value">{{ responder_information['phonenumber']}}</span> <br>
+              <span class="info-label">Address</span> <span class="info-value">{{responder_information['address'] }}</span>
             </p> 
         </div>
         <!-- Respond records -->
         {% for event in respond_record %}
         <div class="justify-content-center">
             <p> 
-                Event ID {{ event['eventid'] }} &emsp; Created At {{ event['createdat'] }} &emsp; Status {{ event['status']}} &emsp; Responder {{ event['responderid']}} 
+              <span class="info-label">Event ID</span> <span class="info-value">{{ event['eventid'] }}</span>&emsp; 
+              <span class="info-label">Created At</span> <span class="info-value">{{ event['createdat'][:16] }}</span> &emsp; 
+              <span class="info-label">Status</span> <span class="info-value">{{ event['status'] }}</span> &emsp; 
+              <span class="info-label">Responder ID</span> <span class="info-value">{{ event['responderid'] }}</span>
             </p> 
         </div>
         {% endfor %}

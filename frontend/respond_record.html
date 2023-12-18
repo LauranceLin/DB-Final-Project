@@ -96,7 +96,8 @@
             </div>
             <div class="event-details">
                 <p>
-                  &emsp;&emsp;&emsp;&emsp;&emsp; Published at {{ event['createdat'] }} &emsp; Status {{ event['status'] }} &emsp;&emsp;
+                  &emsp;&emsp;&emsp;&emsp;&emsp; <span class="info-label">Published at</span> <span class="info-value">{{ event['createdat'][:16] }}</span> &emsp; 
+                  <span class="info-label">Status</span> <span class="info-value">{{ event['status'] }}</span> &emsp;&emsp;
                   <a href="{{url_for('event', eventid=event['eventid']) }}" style="float: right;"> Read more &raquo; </a>
                 </p>
             </div>
@@ -109,9 +110,9 @@
 
         <!-- Pagination -->
         <div class="pagination justify-content-center">
-          <a {% if offset == 0 %} href="#" {% else %} href="{{ url_for('event_list', offset = offset - 1) }}" {% endif %}> 上一頁 </a>
+          <a {% if offset == 0 %} href="#" {% else %} href="{{ url_for('respond_record', offset = offset - 1) }}" {% endif %}> 上一頁 </a>
           <span> Page {{ offset + 1 }} </span>
-          <a {% if offset == 0 %} href="#" {% else %} href="{{ url_for('event_list', offset = offset + 1) }}" {% endif %}> 下一頁 </a>
+          <a {% if offset == 100 %} href="#" {% else %} href="{{ url_for('respond_record', offset = offset + 1) }}" {% endif %}> 下一頁 </a>
         </div>
       </div>
     </div>

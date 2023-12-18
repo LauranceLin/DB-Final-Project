@@ -178,9 +178,9 @@
 
       <!-- Pagination -->
       <div class="pagination justify-content-center">
-        <a {% if offset == 0 %} href="#" {% else %} href="{{ url_for('notifications', offset = offset - 1) }}" {% endif %}> 上一頁 </a>
+        <a {% if offset == 0 %} href="#" {% else %} href="{{ url_for('subscription', offset = offset - 1) }}" {% endif %}> 上一頁 </a>
         <span> Page {{ offset + 1 }} </span>
-        <a {% if offset == 0 %} href="#" {% else %} href="{{ url_for('notifications', offset = offset + 1) }}" {% endif %}> 下一頁 </a>
+        <a {% if offset == 100 %} href="#" {% else %} href="{{ url_for('subscription', offset = offset + 1) }}" {% endif %}> 下一頁 </a>
       </div>
     </div>
   </div>

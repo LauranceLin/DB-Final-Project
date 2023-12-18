@@ -1,13 +1,37 @@
 html, 
 body {
-    background-color:#F3E2B6;
+    background-color:#efe8d4;
 }
 
 #container {
     height: 100vh;
+    background-color: #efe8d4;
 }
 
 .icon {
     max-width: 30%;
     height: auto;
+}
+
+.text-center {
+    font-size: 2.4rem; 
+    color: #c7895f;
+    font-weight: bolder;
+    font-family: "Gill Sans", sans-serif;
+}
+
+.btn-primary {
+    color: #FFFFFF;
+    background-color: #eeae83;
+    font-size: 14px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    /* Additional styles for normal state (optional) */
+    border: 1px solid #eeae83;
+    border-radius: 5px;
+    padding: 5px 10px;
+}
+.btn-primary:hover {
+    background-color: #b37373;
+    border: 1px solid #b37373; 
 }
