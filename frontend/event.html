@@ -204,13 +204,6 @@
             </div>
           </div>
           <div class="form-group row">
-            <label for="imageUrlInput" class="col-auto col-form-label"> Image Url </label>
-            <div class="col">
-              <input type="url" class="form-control" id="imageUrlInput" name="imageurl" placeholder="輸入事件照片網址（選填）"
-                value="{{ result['imageurl'] }}" disabled>
-            </div>
-          </div>
-          <div class="form-group row">
             <label for="createdAtInput" class="col-auto col-form-label"> Event Created At </label>
             <input type="text" class="col form-control" id="createdAtInput" value="{{ result['createdat'] }}" readonly>
           </div>
@@ -233,7 +226,18 @@
               </select>
             </div>
           </div>
-
+          {% if 'imagelinks' in result %}
+          <div class="form-group row">
+            <label for="imageUrlInput" class="col-auto col-form-label"> Event Images </label>
+            <div class="col">
+              {% for link in result['imagelinks'] %}
+              <!-- <input type="url" class="form-control" id="imageUrlInput" name="imageurl" placeholder="輸入事件照片網址（選填）"
+                value="{{ result['imageurl'] }}" disabled> -->
+                <img src="{{ url_for('static', filename=link) }}" width="200"/>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
           <div>
             <div class="row mt-3">
               <div class="col">

@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, url_for, jsonify, render_template
+from flask import Flask, request, redirect, url_for, jsonify, render_template, abort
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from schema.database import get_db_session
 from schema.models import *
@@ -7,15 +7,19 @@ import datetime
 from schema.enums import *
 from sqlalchemy import exc, select, delete, union
 from celery import Celery
-import json
-
+from werkzeug.utils import secure_filename
 from sqlalchemy.sql.elements import literal_column
 from sqlalchemy import func
+import os
+from PIL import Image
+import uuid
 
 app = Flask(__name__, template_folder='../frontend', static_url_path='/', static_folder='../frontend')
 app.secret_key = 'NnSELOhwoPri1o-RZR3d1A'
 app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379'
 app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379'
+app.config['UPLOAD_FOLDER'] = '../frontend/uploads'
+app.config['UPLOAD_EXTENSIONS'] = ['.jpg', '.jpeg', '.png']
 
 celery = Celery(app.name, broker = app.config['CELERY_BROKER_URL'])
 celery.conf.update(app.config)
@@ -339,15 +343,46 @@ def add_event():
             db_session.add(new_event)
             db_session.flush()
 
+            # event images
+            eventimages = []
+            if 'eventimages' in request.files:
+                files = request.files.getlist('eventimages')
+                print(files)
+                if len(files) > 3:
+                    return jsonify({"error": "at most 3 images allowed"})
+                for file in files:
+                    # check extension
+                    extension = os.path.splitext(secure_filename(file.filename))[1]
+                    new_filename = str(uuid.uuid4()) + extension
+
+                    if extension not in app.config['UPLOAD_EXTENSIONS']:
+                        print("wrong extension, is not an image")
+                        return abort(400)
+
+                    path_name = os.path.join(app.config['UPLOAD_FOLDER'], new_filename)
+                    file.save(os.path.join(app.config['UPLOAD_FOLDER'], new_filename))
+
+                    # resize images
+                    image_width = 400
+                    img = Image.open(path_name)
+                    ratio = float(img.size[0] / image_width)
+                    image_height = int(float(img.size[1] / ratio))
+                    print("resized image: ", image_width, image_height)
+                    img = img.resize((image_width, image_height))
+                    img.save(path_name)
+
+                    image_link = app.config['UPLOAD_FOLDER'].split('/')[2] + '/' + new_filename
+                    print(image_link)
+                    eventimages.append(EventImages(eventid=new_event.eventid, imagelink=image_link))
+
+            if eventimages != []:
+                db_session.bulk_save_objects(eventimages)
+
             print(f"Created new event with id: {new_event.eventid}")
 
             # save info for notification creation
             notification_info["eventid"] = new_event.eventid
             notification_info["notificationtype"] = NOTIFICATION_TYPE[NotificationType.EVENT.value]
-
-            # channel_query_list = []
-            # channel_query_list.append(select(Channel.channelid). \
-            #     filter((Channel.eventdistrict == new_event.district) | (Channel.eventtype == new_event.eventtype)).distinct())
             notification_info["eventdistrict"] = new_event.district
             notification_info["eventtype"] = new_event.eventtype
 
@@ -361,26 +396,9 @@ def add_event():
                                     type=new_animaltype, \
                                     description=new_animaldescription)
                 db_session.add(new_animal)
-                db_session.flush()
-                print(f"Created new animal with id: {new_animal.animalid}")
-
                 animal_types.add(ANIMAL_TYPE[animal['animaltype']])
 
             notification_info['eventanimals'] = list(animal_types)
-
-            # for type in animal_types:
-                # channel_query_list.append(select(Channel.channelid).filter(Channel.eventanimal == type).distinct())
-
-
-            # union_channel_query = union(*channel_query_list)
-            # event_channelids = db_session.execute(union_channel_query).all()
-
-            # event_categories = [
-            #     EventCategory(eventid=new_event.eventid, channelid=channelid[0])
-            #     for channelid in event_channelids
-            # ]
-
-            # db_session.bulk_save_objects(event_categories)
 
             db_session.commit()
 
@@ -465,20 +483,6 @@ def reported_events(offset):
             .order_by(Event.createdat.desc()) \
             .offset(offset*NUM_ITEMS_PER_PAGE).limit(NUM_ITEMS_PER_PAGE).all()
 
-        # filter_channel = db_session.query(Channel) \
-        #     .filter(Channel.eventanimal == animaltype) \
-        #     .filter(Channel.eventdistrict == eventdistrict) \
-        #     .filter(Channel.eventtype == eventtype).first()
-
-        # if filter_channel is not None:
-        #     results = db_session.query(Event, func.string_agg(Animal.type, literal_column("','"))) \
-        #         .join(Animal, Animal.eventid == Event.eventid) \
-        #         .join(EventCategory, EventCategory.eventid == Event.eventid) \
-        #         .filter(EventCategory.channelid == filter_channel.channelid) \
-        #         .group_by(Event.eventid) \
-        #         .order_by(Event.createdat.desc()) \
-        #         .offset(offset*NUM_ITEMS_PER_PAGE).limit(NUM_ITEMS_PER_PAGE).all()
-
         db_session.close()
 
     event_list = [
@@ -530,6 +534,9 @@ def event(eventid):
             }
         for animal in eventanimals]
 
+        query_eventimages = select(EventImages.imagelink).filter(EventImages.eventid == eventid)
+        imagelinks = [img.imagelink for img in db_session.execute(query_eventimages).all()]
+
         result = {
             "eventid": event.eventid,
             "eventtype": event.eventtype,
@@ -542,8 +549,11 @@ def event(eventid):
             "district": event.district,
             "shortaddress": event.shortaddress,
             "createdat": str(event.createdat),
-            "animals": animallist
+            "animals": animallist,
         }
+
+        if imagelinks != []:
+            result["imagelinks"] = imagelinks
 
         if event.status == EVENT_STATUS[EventStatus.RESOLVED.value]:
             # fetch report info
