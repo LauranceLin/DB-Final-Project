@@ -67,17 +67,17 @@
         <h3> User Info </h3>
         <!-- User Info -->
         <div class="justify-content-center">
-            <p> 
-                User ID {{ user_information['userid'] }} &emsp; Name {{ user_information['name'] }} &emsp; Email {{ user_information['email']}} &emsp; Phone Number {{ user_information['phonenumber']}} &emsp; Status {{ user_information['status'] }} 
+            <p>
+                User ID {{ user_information['userid'] }} &emsp; Name {{ user_information['name'] }} &emsp; Email {{ user_information['email']}} &emsp; Phone Number {{ user_information['phonenumber']}} &emsp; Status {{ user_information['status'] }}
             </p>
             <button type="button" class="btn btn-danger" id="banUserBtn" data-userid="{{ userid }}"> Ban User </button>
         </div>
         <!-- Report records -->
         {% for event in report_record %}
         <div class="justify-content-center">
-            <p> 
-                Event ID {{ event['eventid'] }} &emsp; Created At {{ event['createdat'] }} &emsp; Status {{ event['status']}} &emsp; Responder {{ event['responderid']}} 
-            </p> 
+            <p>
+                Event ID {{ event['eventid'] }} &emsp; Created At {{ event['createdat'] }} &emsp; Status {{ event['status']}} &emsp; Responder {{ event['responderid']}}
+            </p>
         </div>
         {% endfor %}
 

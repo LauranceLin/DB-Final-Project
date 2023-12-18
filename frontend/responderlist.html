@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title> Responder Information </title>
+  <title> Responder List </title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="{{ url_for('static', filename='assets/css/main.css') }}" rel="stylesheet">
 </head>
@@ -25,7 +25,7 @@
             <a class="nav-link" href="{{url_for('user_list', offset=0)}}"> User List </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('responder_list', offset=0) }}"> Responder List </a>
+            <a class="nav-link active" aria-current="page" href="{{ url_for('responder_list', offset=0) }}"> Responder List </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#profileModal">
@@ -63,30 +63,32 @@
 
   <!-- Responders -->
   <div class="container mt-5">
-    <div id="responderInfo" class="col-md-9">
-        <h3> Responder Info </h3>
-        <!-- Responder Info -->
+    <div class="row">
+      <!-- Responder list -->
+      <div id="responderList" class="col-md-9">
+        <h3> Responder List </h3>
+        <!-- Responders -->
+        {% for responder in responderlist %}
         <div class="justify-content-center">
-            <p>
-                Responder ID {{ responder_information['responderid'] }} &emsp; Name {{ responder_information['respondername'] }} &emsp; Email {{ responder_information['email']}} &emsp; Phone Number {{ responder_information['phonenumber']}} <br>
-                Address {{responder_information['address'] }}
-            </p>
-        </div>
-        <!-- Respond records -->
-        {% for event in respond_record %}
-        <div class="justify-content-center">
-            <p>
-                Event ID {{ event['eventid'] }} &emsp; Created At {{ event['createdat'] }} &emsp; Status {{ event['status']}} &emsp; Responder {{ event['responderid']}}
-            </p>
+            <div>
+                <p> Responder ID {{ responder['responderid'] }} &emsp; Name {{ responder['respondername'] }} &emsp; Email {{ responder['email']}} &emsp; Phone Number {{ responder['phonenumber']}} </p> 
+            </div>
+            <div>
+                <p> 
+                    &emsp; Address {{ responder['address'] }} &emsp;&emsp;
+                    <a class="col" href="{{url_for('responderinfo', responderid=responder['responderid'], offset=0) }}"> Read more </a>
+                </p>
+            </div>
         </div>
         {% endfor %}
 
         <!-- Pagination -->
         <div class="pagination justify-content-center">
-            <a {% if offset == 0 %} href="#" {% else %} href="{{ url_for('responderinfo', responderid=responderid, offset=offset-1) }}" {% endif %}> 上一頁 </a>
-            <span> Page {{ offset + 1 }} </span>
-            <a {% if offset == 100 %} href="#" {% else %} href="{{ url_for('responderinfo', responderid=responderid, offset=offset+1) }}" {% endif %}> 下一頁 </a>
+          <a {% if offset == 0 %} href="#" {% else %} href="{{ url_for('responder_list', offset = offset - 1) }}" {% endif %}> 上一頁 </a>
+          <span> Page {{ offset + 1 }} </span>
+          <a {% if offset == 100 %} href="#" {% else %} href="{{ url_for('responder_list', offset = offset + 1) }}" {% endif %}> 下一頁 </a>
         </div>
+      </div>
     </div>
   </div>
 
