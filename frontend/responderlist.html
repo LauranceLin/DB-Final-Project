@@ -84,9 +84,9 @@
 
         <!-- Pagination -->
         <div class="pagination justify-content-center">
-          <a {% if offset == 0 %} href="{{ url_for('admin_events', offset = offset) }}" {% else %} href="{{ url_for('responder_list', offset = offset - 1) }}" {% endif %}> 上一頁 </a>
+          <a {% if offset == 0 %} href="{{ url_for('responder_list', offset = offset) }}" {% else %} href="{{ url_for('responder_list', offset = offset - 1) }}" {% endif %}> 上一頁 </a>
           <span> Page {{ offset + 1 }} </span>
-          <a {% if responderlist | length < 10 %} href="{{ url_for('admin_events', offset = offset) }}" {% else %} href="{{ url_for('responder_list', offset = offset + 1) }}" {% endif %}> 下一頁 </a>
+          <a {% if responderlist | length < 10 %} href="{{ url_for('responder_list', offset = offset) }}" {% else %} href="{{ url_for('responder_list', offset = offset + 1) }}" {% endif %}> 下一頁 </a>
         </div>
       </div>
     </div>
