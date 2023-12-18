@@ -3,11 +3,12 @@ CREATE TABLE IF NOT EXISTS Users(
     Password CHAR(60) NOT NULL,
     Email VARCHAR(30) NOT NULL,
     Role VARCHAR(20) NOT NULL,
-    PRIMARY KEY(UserId)
+    PRIMARY KEY(UserId),
+    CONSTRAINT Email UNIQUE (Email),
 );
 
 CREATE TABLE IF NOT EXISTS UserInfo(
-    UserId SERIAL NOT NULL,
+    UserId INTEGER NOT NULL,
     Name VARCHAR(20) NOT NULL,
     PhoneNumber CHAR(10) NOT NULL,
     Status VARCHAR(15) NOT NULL,
@@ -18,7 +19,7 @@ CREATE TABLE IF NOT EXISTS UserInfo(
 );
 
 CREATE TABLE IF NOT EXISTS ResponderInfo(
-    ResponderId SERIAL NOT NULL,
+    ResponderId INTEGER NOT NULL,
     ResponderName VARCHAR(60) NOT NULL UNIQUE,
     PhoneNumber CHAR(10) NOT NULL UNIQUE,
     ResponderType VARCHAR(60) NOT NULL,
