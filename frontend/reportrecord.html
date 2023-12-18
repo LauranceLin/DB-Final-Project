@@ -102,8 +102,12 @@
                 </p>
             </div>
           </div>
-          <div class="col">
-            <button type="submit" class="btn btn-danger mt-3" name="delete" data-eventid="{{ event['eventid'] }}"> Delete </button>
+          <div class="col" >
+            {% if event['status'] == 'Deleted' %}
+              <button type="submit" class="btn btn-danger mt-3" name="deleted" data-eventid="{{ event['eventid'] }}" disabled style="float: right;"> Delete </button>
+            {% else %}
+              <button type="submit" class="btn btn-danger mt-3" name="delete" data-eventid="{{ event['eventid'] }}" style="float: right;"> Delete </button>
+            {% endif %}
           </div>
         </div>
         {% endfor %}

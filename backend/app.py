@@ -168,6 +168,7 @@ def get_userinfo():
             "name": userinfo.name,
             "phonenumber": userinfo.phonenumber
         }
+        db_session.close()
         return jsonify(info)
     elif is_responder():
         responderinfo = db_session.query(ResponderInfo).filter(ResponderInfo.responderid == current_user.userid).first()
@@ -180,6 +181,7 @@ def get_userinfo():
             "type": responderinfo.respondertype,
             "address": responderinfo.address
         }
+        db_session.close()
         return jsonify(info)
     else: # admin
         return jsonify({"userid": current_user.userid, "role": current_user.role, "email": current_user.email})
@@ -197,6 +199,7 @@ def get_placementinfo():
         for p in placements
     ]
     # print(placement_list)
+    db_session.close()
     return jsonify(placement_list)
 
 @app.route("/notifications/<int:offset>", methods=["GET"])
@@ -276,7 +279,9 @@ def add_event():
         shortaddress = request.values['shortaddress']
         createdat = datetime.datetime.now()
         num_animals = len(request.form.getlist('animaltype'))
+
         if num_animals != len(request.form.getlist('animaldescription')):
+            db_session.close()
             return jsonify({"error": "wrong number of animals"})
 
         eventanimals = [{
@@ -288,9 +293,11 @@ def add_event():
 
         # error checking for event
         if len(shortaddress) > 30:
+            db_session.close()
             return jsonify({"error": "Short address too long"})
 
         if len(shortdescription) > 100:
+            db_session.close()
             return jsonify({"error": "Short description too long"})
 
         try:
@@ -298,6 +305,7 @@ def add_event():
             if not check_eventtype(eventtype=eventtype):
                 raise
         except:
+            db_session.close()
             return jsonify({"error": "Eventtype doesn't exist"})
 
         try:
@@ -306,6 +314,7 @@ def add_event():
             if not check_location(city=city, district=district):
                 raise
         except:
+            db_session.close()
             return jsonify({"error": "Location doesn't exist"})
 
         # error checking for animal
@@ -320,7 +329,8 @@ def add_event():
                 if len(animaldescription) > 100:
                     return jsonify({"error": "Animal description too long"})
         except:
-            jsonify({"error": "eventanimals should be a list of dictionaries"})
+            db_session.close()
+            return jsonify({"error": "animal data error"})
 
 
         notification_info = {}
@@ -347,9 +357,12 @@ def add_event():
             eventimages = []
             if 'eventimages' in request.files:
                 files = request.files.getlist('eventimages')
-                print(files)
+
                 if len(files) > 3:
+                    db_session.rollback()
+                    db_session.close()
                     return jsonify({"error": "at most 3 images allowed"})
+
                 for file in files:
                     # check extension
                     extension = os.path.splitext(secure_filename(file.filename))[1]
@@ -357,6 +370,8 @@ def add_event():
 
                     if extension not in app.config['UPLOAD_EXTENSIONS']:
                         print("wrong extension, is not an image")
+                        db_session.rollback()
+                        db_session.close()
                         return abort(400)
 
                     path_name = os.path.join(app.config['UPLOAD_FOLDER'], new_filename)
@@ -405,6 +420,7 @@ def add_event():
         except exc.SQLAlchemyError as e:
             print(e._message)
             db_session.rollback()
+            db_session.close()
             return redirect(url_for('add_event'))
 
         db_session.close()
@@ -600,6 +616,8 @@ def event(eventid):
                 locked_event.responderid = current_user.userid
 
                 db_session.commit()
+                db_session.close()
+
                 print("Unresolved --> Ongoing")
                 return redirect(url_for("event", eventid=eventid))
 
@@ -607,6 +625,7 @@ def event(eventid):
                 print("error", e._message)
                 print("failed to accept event")
                 db_session.rollback()
+                db_session.close()
 
             # responder does not wish to respond to this event
             return redirect(url_for("event", eventid=eventid))
@@ -621,6 +640,7 @@ def event(eventid):
             new_eventtype = int(request.values["eventtype"])
 
             if not check_location(new_city, new_district) or not check_eventtype(new_eventtype):
+                db_session.close()
                 return jsonify({"error": "error with data fields"})
 
             # new animals information
@@ -634,9 +654,6 @@ def event(eventid):
                 locked_event = db_session.query(Event).with_for_update().filter(Event.eventid == eventid).first()
                 saved_event_id = locked_event.eventid
 
-                delete_channel_queries = [] # query channels corresponding to old values
-                add_channel_queries = [] # query channels corresponding to new values
-
                 # status
                 if new_status == EventStatus.ONGOING.value:
                     pass
@@ -649,6 +666,7 @@ def event(eventid):
                     locked_event.responderid = None
 
                     db_session.commit()
+                    db_session.close()
                     print("Ongoing --> Unresolved")
                     return redirect(url_for("event", eventid=saved_event_id))
 
@@ -657,17 +675,13 @@ def event(eventid):
                     print("Ongoing --> False Alarm")
                     locked_event.status = EVENT_STATUS[EventStatus.FALSE_ALARM.value]
                 else:
+                    # error: no other event status types are allowed
+                    db_session.rollback()
                     db_session.close()
-                    # error = "error: invalid status update"
                     return redirect(url_for("event", eventid=saved_event_id))
 
                 # eventtype
                 if locked_event.eventtype != EVENT_TYPE[new_eventtype]:
-                    old_eventtype = locked_event.eventtype
-
-                    # delete_channel_queries.append(select(Channel.channelid).filter(Channel.eventtype == old_eventtype))
-                    # add_channel_queries.append(select(Channel.channelid).filter(Channel.eventtype == EVENT_TYPE[new_eventtype]))
-
                     locked_event.eventtype = EVENT_TYPE[new_eventtype]
 
                 # short description
@@ -675,13 +689,6 @@ def event(eventid):
 
                 # location
                 if CITIES[new_city] != locked_event.city or DISTRICTS[new_city][new_district] != locked_event.district:
-
-                    # TODO: delete EventCategory entries
-                    # delete_channel_queries.append(select(Channel.channelid).filter(Channel.eventdistrict == locked_event.district))
-
-                    # TODO: add new EventCategory entries
-                    # add_channel_queries.append(select(Channel.channelid).filter(Channel.eventdistrict == DISTRICTS[new_city][new_district]))
-
                     locked_event.city = CITIES[new_city]
                     locked_event.district = DISTRICTS[new_city][new_district]
 
@@ -708,48 +715,15 @@ def event(eventid):
                                 "placementid": new_placements[i]
                             }
                         )
-                        # delete_channel_queries.append(select(Channel.channelid).filter(Channel.eventanimal == ANIMAL_TYPE[new_animaltypes[i]]))
-                        # add_channel_queries.append(select(Channel.channelid).filter(Channel.eventanimal == ANIMAL_TYPE[new_animaltypes[i]]))
                     else:
                         db_session.close()
                         return jsonify({"error": "error in animal type"})
 
                 db_session.bulk_update_mappings(Animal, all_animal_updates)
 
-                # deal with EventCategories
-                # all delete queries
-                # if delete_channel_queries:
-                #     delete_query = union(*delete_channel_queries)
-                # else:
-                #     delete_query = None
-
-                # # all add queries
-                # if add_channel_queries:
-                #     add_query = union(*add_channel_queries)
-                # else:
-                #     add_query = None
-
-                # all_deleted_channels = [c.channelid for c in db_session.execute(delete_query).all()]
-                # all_new_channels = [c.channelid for c in db_session.execute(add_query).all()]
-                # original = [c.channelid for c in db_session.query(EventCategory.channelid).filter(EventCategory.eventid == eventid).all()]
-
-                # print("the end of the complicated union stuff: ")
-                # print(all_deleted_channels)
-                # print(all_new_channels)
-
-                # deleted = list(set(all_deleted_channels) - set(all_new_channels))
-                # new = list(set(all_new_channels) - set(original))
-
-                # print(deleted)
-                # print(new)
-
-                # stmt = delete(EventCategory).where(EventCategory.eventid == saved_event_id).where(EventCategory.channelid.in_(deleted))
-
-                # new_categories = [ EventCategory(eventid=saved_event_id, channelid=cid) for cid in new ]
-
-                # db_session.execute(stmt)
-                # db_session.bulk_save_objects(new_categories)
                 db_session.commit()
+
+                db_session.close()
 
                 return redirect(url_for("event", eventid=eventid))
 
@@ -761,7 +735,7 @@ def event(eventid):
                 return jsonify({"error": "error updating event info"})
 
     else:
-        # responder should not be able to edit this event
+        # others should not be able to edit this event
         return redirect(url_for("event", eventid=eventid))
 
 @app.route("/delete_event/<int:eventid>", methods=["POST"])
@@ -777,7 +751,8 @@ def delete_event(eventid):
                 locked_event.status = EVENT_STATUS[EventStatus.DELETED.value]
                 db_session.commit()
                 db_session.close()
-
+        else:
+            db_session.close()
     except exc.SQLAlchemyError as e:
         print(e._message)
         db_session.rollback()
@@ -902,6 +877,7 @@ def delete_subscription(channelid):
         print(e._message)
         db_session.rollback()
 
+    db_session.close()
     return redirect(url_for("subscription", offset=0))
 
 @app.route("/logout")
@@ -951,6 +927,7 @@ def event_results(eventid):
             print("Error: ", e._message)
             db_session.rollback()
 
+        db_session.close()
         return redirect(url_for("event", eventid=eventid))
 
     elif result_type == NotificationType.WARNING.value:
@@ -995,6 +972,8 @@ def event_results(eventid):
         except exc.SQLAlchemyError as e:
             print("Error: ", e._message)
             db_session.rollback()
+
+        db_session.close()
 
         # TODO: create notifications
         create_notifications.delay(notification_info)

@@ -7,7 +7,8 @@ fetch('/userinfo', {
     if (data.role === 'user') {
         document.getElementById('report').style.display = 'block';
     } else {
-        document.getElementById('report').style.display = 'none';
+        // document.getElementById('report').style.display = 'none';
+        document.getElementById('report').style.display = 'block';
         document.getElementById('acceptBtn').style.display = 'block';
 
         fetch('/placementinfo')
@@ -54,7 +55,6 @@ function switchToEdit() {
     document.getElementById('roadInput').disabled = false;
     document.getElementById('eventTypeSelect').disabled = false;
     document.getElementById('descriptionInput').disabled = false;
-    document.getElementById('imageUrlInput').disabled = false;
     document.getElementById('eventStatusSelect').disabled = false;
 
     status_selector = document.getElementById('eventStatusSelect');

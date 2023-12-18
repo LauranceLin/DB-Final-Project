@@ -228,12 +228,10 @@
           </div>
           {% if 'imagelinks' in result %}
           <div class="form-group row">
-            <label for="imageUrlInput" class="col-auto col-form-label"> Event Images </label>
+            <label class="col-auto col-form-label"> Event Images </label>
             <div class="col">
               {% for link in result['imagelinks'] %}
-              <!-- <input type="url" class="form-control" id="imageUrlInput" name="imageurl" placeholder="輸入事件照片網址（選填）"
-                value="{{ result['imageurl'] }}" disabled> -->
-                <img src="{{ url_for('static', filename=link) }}" width="200"/>
+              <img src="{{ url_for('static', filename=link) }}" width="200" />
               {% endfor %}
             </div>
           </div>
@@ -254,15 +252,23 @@
 
           <div class="row justify-content-around" id="editZone" style="display: none;">
             <div class="col-md-3">
+              {% if result['status'] =='Ongoing' %}
               <a class="btn btn-primary btn-block" id="editBtn" onclick="switchToEdit()"> Edit Event </a>
+              {% endif %}
             </div>
             <div class="col-md-3">
-              <a href="{{ url_for('event_results', eventid=eventid) }}" class="btn btn-primary btn-block"> Send Warning
+              {% if result['status'] == 'Ongoing' %}
+              <a href="{{ url_for('event_results', eventid=eventid) }}" class="btn btn-primary btn-block">
+                Send Warning
               </a>
+              {% endif %}
             </div>
             <div class="col-md-3">
-              <a href="{{ url_for('event_results', eventid=eventid) }}" class="btn btn-primary btn-block"> Post Report
+              {% if result['status'] =='Ongoing' %}
+              <a href="{{ url_for('event_results', eventid=eventid) }}" class="btn btn-primary btn-block">
+                Post Report
               </a>
+              {% endif %}
             </div>
           </div>
 
@@ -272,21 +278,22 @@
             </div>
           </div>
         </form>
-
-        {% if 'warning' in result %}
-        <div class="col">
-          <h1>Warning</h1>
-          <input type="text" class="row" disabled value="{{ result['warning']['warninglevel'] }}">
-          <input type="text" class="row" disabled value="{{ result['warning']['shortdescription'] }}">
-          <input type="text" class="row" disabled value="{{ result['warning']['createdat'] }}">
+        <div class="col" id="report" style="display: none;">
+          {% if 'warning' in result %}
+          <div class="col">
+            <h1>Warning</h1>
+            <input type="text" class="row" disabled value="{{ result['warning']['warninglevel'] }}">
+            <input type="text" class="row" disabled value="{{ result['warning']['shortdescription'] }}">
+            <input type="text" class="row" disabled value="{{ result['warning']['createdat'] }}">
+          </div>
+          {% elif 'report' in result %}
+          <div class="col">
+            <h1>Report</h1>
+            <input type="text" class="row" disabled value="{{ result['report']['shortdescription'] }}">
+            <input type="text" class="row" disabled value="{{ result['report']['createdat'] }}">
+          </div>
+          {% endif %}
         </div>
-        {% elif 'report' in result %}
-        <div class="col">
-          <h1>Report</h1>
-          <input type="text" class="row" disabled value="{{ result['report']['shortdescription'] }}">
-          <input type="text" class="row" disabled value="{{ result['report']['createdat'] }}">
-        </div>
-        {% endif %}
       </div>
     </div>
   </div>
