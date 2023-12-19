@@ -136,7 +136,7 @@ CREATE TABLE IF NOT EXISTS Notification(
     EventId INT NOT NULL,
     NotifiedUserId INT NOT NULL,
     NotificationTimestamp TIMESTAMP NOT NULL,
-    PRIMARY KEY(EventId, NotifiedUserId),
+    PRIMARY KEY(NotificationType, EventId, NotifiedUserId),
     FOREIGN KEY(EventId) REFERENCES Event(EventId)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
