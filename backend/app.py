@@ -90,7 +90,10 @@ def create_notifications(notification_info):
 def user_loader(userid):
     db_session = get_db_session()
     user = db_session.query(Users).filter(Users.userid == userid).first()
-    db_session.close()
+    if user.role == ROLE[0]:
+        userinfo = db_session.query(UserInfo).filter(UserInfo.userid == userid).first()
+        if userinfo.status == USERS_STATUS[UsersStatus.BANNED.value]:
+            user = None
     return user
 
 @app.route("/register", methods=["GET", "POST"])
@@ -146,6 +149,13 @@ def login():
     db_session = get_db_session()
 
     user = db_session.query(Users).filter(Users.email == email).first()
+
+    if user and user.role == ROLE[0]:
+        userinfo = db_session.query(UserInfo).filter(UserInfo.userid == user.userid).first()
+        if userinfo.status == USERS_STATUS[UsersStatus.BANNED.value]:
+            db_session.close()
+            print("user has been banned")
+            return redirect(url_for("login"))
 
     db_session.close()
 

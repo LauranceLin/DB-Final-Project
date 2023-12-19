@@ -7,7 +7,7 @@ class UsersStatus(enum.Enum):
     BANNED = 1
     USERS_STATUS_LEN = 2
 
-USERS_STATUS = ["Active", "Banned"]
+USERS_STATUS = ["active", "banned"]
 
 class EventType(enum.Enum):
     ROADKILL = 0
