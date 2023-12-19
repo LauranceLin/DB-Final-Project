@@ -97,7 +97,8 @@
             </div>
             <div class="event-details">
                 <p>
-                  &emsp;&emsp;&emsp;&emsp;&emsp; Published at {{ event['createdat'] }} Status {{ event['status'] }}
+                  &emsp;&emsp;&emsp;&emsp;&emsp; <span class="info-label">Published at</span> <span class="info-value">{{ event['createdat'][:16] }}</span>
+                  <span class="info-label">Status</span> <span class="info-value">{{ event['status'] }}</span>
                   <a href="{{url_for('event', eventid=event['eventid']) }}"> Read more &raquo; </a>
                 </p>
             </div>

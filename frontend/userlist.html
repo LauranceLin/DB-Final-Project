@@ -71,11 +71,15 @@
         {% for user in userlist %}
         <div class="justify-content-center">
             <div>
-                <p> User ID {{ user['userid'] }} &emsp; Name {{ user['name'] }} &emsp; Email {{ user['email']}} &emsp; Phone Number {{ user['phonenumber']}} </p>
+                <p> <span class="info-label">User ID</span> <span class="info-value">{{ user['userid'] }}</span> &emsp;
+                  <span class="info-label">Name</span> <span class="info-value">{{ user['name'] }}</span> &emsp;
+                  <span class="info-label">Email</span> <span class="info-value">{{ user['email']}}</span> &emsp;
+                  <span class="info-label">Phone Number</span> <span class="info-value">{{ user['phonenumber']}}</span>
+                </p>
             </div>
             <div>
                 <p>
-                    &emsp; Status {{ user['status'] }} &emsp;
+                    &emsp; <span class="info-label">Status</span> <span class="info-value">{{ user['status'] }}</span> &emsp;
                     <a class="col" href="{{url_for('viewuserinfo', userid=user['userid'], offset=0) }}"> Read more </a>
                 </p>
             </div>

@@ -68,7 +68,11 @@
         <!-- User Info -->
         <div class="justify-content-center">
             <p>
-                User ID {{ user_information['userid'] }} &emsp; Name {{ user_information['name'] }} &emsp; Email {{ user_information['email']}} &emsp; Phone Number {{ user_information['phonenumber']}} &emsp; Status {{ user_information['status'] }}
+                <span class="info-label">User ID</span> <span class="info-value"> {{ user_information['userid'] }}</span> &emsp;
+                <span class="info-label">Name</span> <span class="info-value"> {{ user_information['name'] }}</span> &emsp;
+                <span class="info-label">Email</span> <span class="info-value"> {{ user_information['email']}}</span> &emsp;
+                <span class="info-label">Phone Number</span> <span class="info-value"> {{ user_information['phonenumber']}}</span> &emsp;
+                <span class="info-label">Status</span> <span class="info-value"> {{ user_information['status'] }}</span>
             </p>
             <button type="button" class="btn btn-danger" id="banUserBtn" data-userid="{{ userid }}"> Ban User </button>
         </div>
@@ -76,7 +80,10 @@
         {% for event in report_record %}
         <div class="justify-content-center">
             <p>
-                Event ID {{ event['eventid'] }} &emsp; Created At {{ event['createdat'] }} &emsp; Status {{ event['status']}} &emsp; Responder {{ event['responderid']}}
+              <span class="info-label">Event ID</span> <span class="info-value">{{ event['eventid'] }}</span> &emsp;
+              <span class="info-label">Created At</span> <span class="info-value">{{ event['createdat'][:16] }}</span> &emsp;
+              <span class="info-label">Status</span> <span class="info-value">{{ event['status']}}</span> &emsp;
+              <span class="info-label">Responder</span> <span class="info-value">{{ event['responderid']}}</span>
             </p>
         </div>
         {% endfor %}

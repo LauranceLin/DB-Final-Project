@@ -165,7 +165,7 @@
         {% for event in event_list %}
         <div class="event  justify-content-center " style="border: #d7dee7 solid; border-radius: 10px; padding: 1%; margin: 1%;">
             <div class="event-header">
-                <p> Event &raquo; &emsp; {{ event['city'] }} / {{ event['district'] }} /
+                <p> <span class="eventType-label">Event &raquo;</span> &emsp; {{ event['city'] }} / {{ event['district'] }} /
                   {% if event['animals']|length == 1 %}
                       {{ event['animals'][0] }}
                   {% elif event['animals']|length == 2 %}
@@ -178,7 +178,8 @@
             </div>
             <div class="event-details">
                 <p>
-                    &emsp;&emsp;&emsp;&emsp;&emsp; Published at {{ event['createdat'] }} &emsp; Status {{ event['status'] }} &emsp;
+                    &emsp;&emsp;&emsp;&emsp;&emsp; <span class="info-label">Published at</span> <span class="info-value">{{ event['createdat'][:16] }}</span>&emsp;
+                    <span class="info-label">Status</span> <span class="info-value">{{ event['status'] }}</span> &emsp;
                     <a href="{{url_for('event', eventid=event['eventid']) }}" style="float: right; margin: 1%;"> Read more &raquo; </a>
                 </p>
             </div>

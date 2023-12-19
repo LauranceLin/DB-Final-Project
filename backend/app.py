@@ -1185,7 +1185,6 @@ def viewuserinfo(userid, offset):
                 "phonenumber": user_info.phonenumber,
                 "status": user_info.status
                 }
-
         report_record = [
             {
                 "eventid": e.Event.eventid,
@@ -1283,7 +1282,6 @@ def responderinfo(responderid, offset):
                 "phonenumber": responder_info.phonenumber,
                 "address": responder_info.address
             }
-
 
         respond_record = [
             {
