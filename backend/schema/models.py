@@ -129,7 +129,7 @@ class SubscriptionRecord(Base):
 
 class Notification(Base):
     __tablename__ = "notification"
-    notificationtype: Mapped[str] = mapped_column("notificationtype", VARCHAR(7))
+    notificationtype: Mapped[str] = mapped_column("notificationtype", VARCHAR(7), primary_key=True)
     eventid: Mapped[int] = mapped_column("eventid", ForeignKey("event.eventid"), primary_key=True)
     notifieduserid: Mapped[int] = mapped_column("notifieduserid", ForeignKey("users.userid"), primary_key=True)
     notificationtimestamp: Mapped[TIMESTAMP] = mapped_column("notificationtimestamp", TIMESTAMP)

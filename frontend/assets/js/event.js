@@ -2,49 +2,72 @@ fetch('/userinfo', {
     method: 'GET',
     credentials: 'same-origin'
 })
-.then(response => response.json())
-.then(function(data) {
-    if (data.role === 'user') {
-        document.getElementById('report').style.display = 'block';
-    } else {
-        // document.getElementById('report').style.display = 'none';
-        document.getElementById('report').style.display = 'block';
-        document.getElementById('acceptBtn').style.display = 'block';
+    .then(response => response.json())
+    .then(function (data) {
+        if (data.role === 'user') {
+            document.getElementById('report').style.display = 'block';
 
-        fetch('/placementinfo')
-        .then(response => response.json())
-        .then(function(placementData){
-            const animalEntries = document.querySelectorAll('.AnimalEntry');
+            fetch('/placementinfo')
+                .then(response => response.json())
+                .then(function (placementData) {
+                    const animalEntries = document.querySelectorAll('.AnimalEntry');
 
-            animalEntries.forEach((entry) => {
-                const selectElement = entry.querySelector('.placementSelect');
-                selectElement.name = 'placement';
-                selectElement.innerHTML = '';
-                const dataPlacement = entry.getAttribute('data-placement');
+                    animalEntries.forEach((entry) => {
+                        const selectElement = entry.querySelector('.placementSelect');
+                        selectElement.name = 'placement';
+                        selectElement.innerHTML = '';
+                        const dataPlacement = entry.getAttribute('data-placement');
+                        console.log(typeof(dataPlacement))
+                        for (const placement of placementData) {
+                            const option = document.createElement('option');
+                            option.setAttribute('value', placement.placementid);
+                            if (placement.placementname === dataPlacement) {
+                                option.setAttribute('selected', true);
+                            }
+                            option.textContent = placement.placementname;
+                            selectElement.appendChild(option);
+                        }
+                    });
+                });
 
-                for (const placement of placementData) {
-                    const option = document.createElement('option');
-                    option.setAttribute('value', placement.placementid);
-                    if (placement.placementname === dataPlacement) {
-                        option.setAttribute('selected', true);
-                    }
-                    option.textContent = placement.placementname;
-                    selectElement.appendChild(option);
-                }
-            });
-        });
+        } else {
+            // document.getElementById('report').style.display = 'none';
+            document.getElementById('report').style.display = 'block';
+            document.getElementById('acceptBtn').style.display = 'block';
 
-        const responderid = document.getElementById('responderInput').getAttribute('data-responderid');
-        if(data.userid == responderid) {
-            document.getElementById('closeBtn').style.display = 'none';
-            document.getElementById('acceptBtn').style.display = 'none';
-            document.getElementById('editZone').style.display = 'block';
+            fetch('/placementinfo')
+                .then(response => response.json())
+                .then(function (placementData) {
+                    const animalEntries = document.querySelectorAll('.AnimalEntry');
+
+                    animalEntries.forEach((entry) => {
+                        const selectElement = entry.querySelector('.placementSelect');
+                        selectElement.name = 'placement';
+                        selectElement.innerHTML = '';
+                        const dataPlacement = entry.getAttribute('data-placement');
+                        for (const placement of placementData) {
+                            const option = document.createElement('option');
+                            option.setAttribute('value', placement.placementid);
+                            if (placement.placementname === dataPlacement) {
+                                option.setAttribute('selected', true);
+                            }
+                            option.textContent = placement.placementname;
+                            selectElement.appendChild(option);
+                        }
+                    });
+                });
+
+            const responderid = document.getElementById('responderInput').getAttribute('data-responderid');
+            if (data.userid == responderid) {
+                document.getElementById('closeBtn').style.display = 'none';
+                document.getElementById('acceptBtn').style.display = 'none';
+                document.getElementById('editZone').style.display = 'block';
+            }
         }
-    }
-})
-.catch(function(error) {
-    console.error('There has been a problem with your fetch operation:', error);
-});
+    })
+    .catch(function (error) {
+        console.error('There has been a problem with your fetch operation:', error);
+    });
 
 function switchToEdit() {
     document.getElementById('editZone').style.display = 'none';
@@ -77,7 +100,7 @@ function switchToEdit() {
     }
 
     const animaltypes = document.getElementsByClassName('animaltype')
-    for(let i = 0; i < animaltypes.length; i++) {
+    for (let i = 0; i < animaltypes.length; i++) {
         animaltypes[i].disabled = false;
     }
 }
