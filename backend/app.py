@@ -622,11 +622,12 @@ def event(eventid):
                 # lock
                 locked_event = db_session.query(Event).with_for_update().filter(Event.eventid == eventid).first()
 
-                # update
-                locked_event.status = EVENT_STATUS[EventStatus.ONGOING.value]
-                locked_event.responderid = current_user.userid
+                if locked_event.status == EVENT_STATUS[EventStatus.UNRESOLVED.value]:
+                    # update
+                    locked_event.status = EVENT_STATUS[EventStatus.ONGOING.value]
+                    locked_event.responderid = current_user.userid
+                    db_session.commit()
 
-                db_session.commit()
                 db_session.close()
 
                 print("Unresolved --> Ongoing")
