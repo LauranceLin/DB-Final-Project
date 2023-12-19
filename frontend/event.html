@@ -162,7 +162,7 @@
             <div class="col">
               <div id="animalContainer">
                 {% for animal in result['animals'] %}
-                <div class="AnimalEntry" data-placement="{{ animal['placement'] }}">
+                <div class="AnimalEntry" data-placement="{{ animal['placementname'] }}">
                   <select name="animaltype" class="animaltype" disabled>
                     {% set options = ["Dog", "Cat", "Bird", "Snake", "Deer", "Monkey", "Fish", "Bear", "Other"] %}
                     {% for option in options %}

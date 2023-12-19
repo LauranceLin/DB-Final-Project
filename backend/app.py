@@ -654,10 +654,6 @@ def event(eventid):
                 db_session.close()
                 return jsonify({"error": "error with data fields"})
 
-            # new animals information
-            new_animaltypes = request.form.getlist("animaltype")
-            new_animaldescriptions = request.form.getlist("animaldescription")
-            new_placements = request.form.getlist("placement")
 
             # udpate event info
             try:
@@ -729,7 +725,6 @@ def event(eventid):
                     else:
                         db_session.close()
                         return jsonify({"error": "error in animal type"})
-
                 db_session.bulk_update_mappings(Animal, all_animal_updates)
 
                 db_session.commit()
