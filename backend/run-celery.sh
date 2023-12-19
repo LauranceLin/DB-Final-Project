@@ -1,1 +1,1 @@
-backendvenv/bin/celery -A app.celery worker --loglevel=info
+venv/bin/celery -A app.celery worker --loglevel=info
