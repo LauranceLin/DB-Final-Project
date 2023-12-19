@@ -1,4 +1,15 @@
+<img align="left" width="40" height="40" src="./frontend/images/icon.png" alt="icon">
+
 # FurAlert!
+
+## Introduction
+
+「FurAlert!」是由民眾與動保救助單位協力共創的動物救助系統，當民眾遇到動物受傷或相關事件，可以透過系統立即通報救助單位尋求協助，或藉由系統通知掌握事件消息。系統致力於提供即時的動物救助服務，促進社區動物與民眾的安全。
+
+<figure>
+<img src="./images/demo.png" width="600" />
+<figcaption>Notification Page</figcaption>
+</figure>
 
 ## Install PostgreSQL
 
