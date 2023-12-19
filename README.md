@@ -61,3 +61,25 @@ Open 3 terminals and run each of the following scripts in one of the terminals:
 - `run-redis.sh`: acts as the broker for celery worker
 
 Note that `run-redis.sh` has some additional dependencies(ex. `curl`, `tar`), since it compiles the stable version of redis on our machine. Make sure to install them when encountering any errors.
+
+## Test Application
+
+For testing purposes, we have created a number of accounts.
+
+The following accounts all use the password `1234`.
+
+### User Accounts
+- josephine9403@gmail.com
+- george8898@gmail.com
+- nathaniel6882@gmail.com
+- david4864@gmail.com
+
+### Responder Accounts
+- robert@gmail.com
+- jimmie@gmail.com
+- jessica@gmail.com
+- bobby@gmail.com
+
+### Admin Accounts
+- testadmin@gmail.com
+- testadmin2@gmail.com
