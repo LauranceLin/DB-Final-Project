@@ -1,4 +1,4 @@
-<img align="left" width="40" height="40" src="./frontend/images/icon.png" alt="icon">
+<img align="left" width="60" height="60" src="./frontend/images/icon.png" alt="icon">
 
 # FurAlert!
 
