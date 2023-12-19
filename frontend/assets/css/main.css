@@ -117,7 +117,7 @@ input::placeholder {
     color: #666666;
     font-size: 14px;
 }
-#roadInput, #descriptionInput, #imageUrlInput, #createdAtInput, #responderInput {
+#roadInput, #descriptionInput, #imageUrlInput, #createdAtInput, #responderInput, #warningLevelInput, #warningDescriptionInput, #warningCreatedAtInput, #reportDescriptionInput, #reportCreatedAtInput {
     font-size: 14px;
     color: #666666;
     margin-bottom: 15px;

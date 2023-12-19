@@ -231,6 +231,49 @@
             </div>
           </div>
           {% endif %}
+
+          <div class="col" id="report" style="display: none; margin-top: 2em">
+            {% if 'warning' in result %}
+            <div class="col">
+              <h4> Warning </h4>
+                <div class="form-group row">
+                  <label for="warningLevelInput" class="col-auto col-form-label"> Warning Level </label>
+                  <div class="col">
+                    <input type="text" class="form-control" id="warningLevelInput" value="{{ result['warning']['warninglevel'] }}" disabled>
+                  </div>
+                </div>
+                <div class="form-group row">
+                  <label for="warningDescriptionInput" class="col-auto col-form-label"> Description </label>
+                  <div class="col">
+                    <input type="text" class="form-control" id="warningDescriptionInput" value="{{ result['warning']['shortdescription'] }}" disabled>
+                  </div>
+                </div>
+                <div class="form-group row">
+                  <label for="warningCreatedAtInput" class="col-auto col-form-label"> Warning Created At </label>
+                  <div class="col">
+                    <input type="text" class="form-control" id="warningCreatedAtInput" value="{{ result['warning']['createdat'] }}" disabled>
+                  </div>
+                </div>
+            </div>
+            {% elif 'report' in result %}
+            <div class="col">
+              <h4> Report </h4>
+              <div class="form-group row">
+                <label for="reportDescriptionInput" class="col-auto col-form-label"> Description </label>
+                <div class="col">
+                  <input type="text" class="form-control" id="reportDescriptionInput" value="{{ result['report']['shortdescription'] }}" disabled>
+                </div>
+              </div>
+              <div class="form-group row">
+                <label for="reportCreatedAtInput" class="col-auto col-form-label"> Report Created At </label>
+                <div class="col">
+                  <input type="text" class="form-control" id="reportCreatedAtInput" value="{{ result['report']['createdat'] }}" disabled>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+
           <div>
             <div class="row mt-3">
               <div class="col">
@@ -273,22 +316,6 @@
             </div>
           </div>
         </form>
-        <div class="col" id="report" style="display: none;">
-          {% if 'warning' in result %}
-          <div class="col">
-            <h1>Warning</h1>
-            <input type="text" class="row" disabled value="{{ result['warning']['warninglevel'] }}">
-            <input type="text" class="row" disabled value="{{ result['warning']['shortdescription'] }}">
-            <input type="text" class="row" disabled value="{{ result['warning']['createdat'] }}">
-          </div>
-          {% elif 'report' in result %}
-          <div class="col">
-            <h1>Report</h1>
-            <input type="text" class="row" disabled value="{{ result['report']['shortdescription'] }}">
-            <input type="text" class="row" disabled value="{{ result['report']['createdat'] }}">
-          </div>
-          {% endif %}
-        </div>
       </div>
     </div>
   </div>
