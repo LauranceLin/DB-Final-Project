@@ -373,6 +373,8 @@ def add_event():
                     return jsonify({"error": "at most 3 images allowed"})
 
                 for file in files:
+                    if file.filename == '':
+                        continue
                     # check extension
                     extension = os.path.splitext(secure_filename(file.filename))[1]
                     new_filename = str(uuid.uuid4()) + extension
