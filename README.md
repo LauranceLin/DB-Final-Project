@@ -1,8 +1,14 @@
 # FurAlert!
 
+## Install PostgreSQL
+
+This project uses PostgreSQL, preferably 15.5 or up.
+
 ## Backup Existing Database
 
-In the root directory, run the following to restore our existing database:
+First, create a new database with the name `furalert`.
+
+Then in the root directory, run the following to restore our existing database:
 Here we assume the username is postgres.
 
 ```
@@ -26,6 +32,14 @@ pip install -r requirements.txt
 ```
 
 ## Run Application
+
+### Database URL Configuration
+
+In `./backend/schema/database.py`, we have define our database configurations, such as username, password. Make the changes necessary to the config to access the database we just restored.
+
+Here we assume the username and password are both the default value `postgres`.
+
+### Run Scripts
 
 `cd backend`
 
