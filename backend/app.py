@@ -967,13 +967,13 @@ def event_results(eventid):
             notification_info["notificationtype"] = NOTIFICATION_TYPE[NotificationType.WARNING.value]
             notification_info["eventid"] = eventid
 
-            animal_types = [animal.Animal.type for animal in db_session.query(Animal.type).filter(Animal.eventid == eventid).distinct().all()]
+            animal_types = [animal.type for animal in db_session.query(Animal.type).filter(Animal.eventid == eventid).distinct().all()]
             print(animal_types)
             notification_info['eventanimals'] = animal_types
 
             event = db_session.query(Event.district, Event.eventtype).filter(Event.eventid == eventid).first()
-            notification_info["eventtype"] = event.Event.eventtype
-            notification_info["eventdistrict"] = event.Event.eventdistrict
+            notification_info["eventtype"] = event.eventtype
+            notification_info["eventdistrict"] = event.district
 
             db_session.add(new_warning)
 
